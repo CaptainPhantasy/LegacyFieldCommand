@@ -1,0 +1,12 @@
+version: "2"
+authtoken: # Add your ngrok authtoken here (get it from https://dashboard.ngrok.com/get-started/your-authtoken)
+tunnels:
+  web:
+    addr: 8765
+    proto: http
+    inspect: true
+  # Optional: Add more tunnels here if needed
+  # mobile:
+  #   addr: 8081
+  #   proto: http
+
