@@ -1,0 +1,54 @@
+import * as React from "react"
+import { cva, type VariantProps } from "class-variance-authority"
+import { cn } from "@/lib/utils"
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-full text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-60 min-h-[44px] px-4 py-2",
+  {
+    variants: {
+      variant: {
+        default:
+          "bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] ring-offset-[var(--bg-primary)]",
+        outline:
+          "border border-[var(--glass-border)] bg-transparent text-[var(--text-primary)] hover:bg-[var(--hover-bg-subtle)] ring-offset-[var(--bg-primary)]",
+        subtle:
+          "bg-[var(--hover-bg-subtle)] text-[var(--text-primary)] hover:bg-[var(--hover-bg-medium)] ring-offset-[var(--bg-primary)]",
+        ghost:
+          "bg-transparent text-[var(--accent)] hover:bg-[var(--hover-bg-light)] ring-offset-[var(--bg-primary)]",
+        destructive:
+          "bg-[var(--error)] text-white hover:bg-red-600 ring-offset-[var(--bg-primary)]",
+      },
+      size: {
+        default: "h-11 px-4 py-2",
+        sm: "h-9 px-3 text-xs",
+        lg: "h-12 px-5 text-base",
+        icon: "h-10 w-10 p-0",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  }
+)
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, ...props }, ref) => {
+    return (
+      <button
+        ref={ref}
+        className={cn(buttonVariants({ variant, size, className }))}
+        {...props}
+      />
+    )
+  }
+)
+Button.displayName = "Button"
+
+export { Button, buttonVariants }
+
+
