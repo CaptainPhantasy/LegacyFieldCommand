@@ -17,10 +17,10 @@ if (fs.existsSync(envPath)) {
 }
 
 const supabaseUrl = env.NEXT_PUBLIC_SUPABASE_URL;
-const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY || 'sbp_1c3492ae02ff8a02b1e46b99dd593b9afcc99d6a';
+const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!supabaseUrl) {
-  console.error('❌ Missing NEXT_PUBLIC_SUPABASE_URL in .env.local');
+if (!supabaseUrl || !serviceRoleKey) {
+  console.error('❌ Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in .env.local');
   process.exit(1);
 }
 

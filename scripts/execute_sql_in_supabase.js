@@ -14,8 +14,12 @@ envContent.split('\n').forEach(line => {
 });
 
 const supabaseUrl = env.NEXT_PUBLIC_SUPABASE_URL;
-// Service role key from earlier conversation
-const serviceRoleKey = 'sbp_1c3492ae02ff8a02b1e46b99dd593b9afcc99d6a';
+const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !serviceRoleKey) {
+  console.error('❌ Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+  process.exit(1);
+}
 
 // Read SQL file
 const sqlPath = path.join(__dirname, '../supabase/fix_rls_complete.sql');
