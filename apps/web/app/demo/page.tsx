@@ -46,18 +46,11 @@ export default function DemoPage() {
   return (
     <div className="relative">
       {currentView === 'dashboard' && (
-        <FieldDashboard 
-          onOpenGate={handleOpenGate}
-        />
+        <FieldDashboard jobs={[]} />
       )}
 
       {currentView === 'job_detail' && (
-        <JobDetail 
-          onBack={handleBackToDashboard}
-          onLogException={handleLogException}
-          onCompleteGate={handleCompleteGate}
-          onGateAction={handleGateAction}
-        />
+        <JobDetail job={null as any} />
       )}
 
       {currentView === 'photos_gate' && (

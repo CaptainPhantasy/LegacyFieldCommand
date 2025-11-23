@@ -6,6 +6,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Loader2, Check } from 'lucide-react';
+import { RatingCell } from '@/components/boards/RatingCell';
+import { PeopleCell } from '@/components/boards/PeopleCell';
+import { LinkCell } from '@/components/boards/LinkCell';
 
 interface TableCellProps {
   column: {
@@ -27,6 +31,7 @@ export function TableCell({ column, value, isEditing, onSave, onCancel }: TableC
     if (typeof value === 'number') return value.toString();
     return JSON.stringify(value);
   });
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
 
   useEffect(() => {
     if (isEditing) {
@@ -39,7 +44,7 @@ export function TableCell({ column, value, isEditing, onSave, onCancel }: TableC
     }
   }, [isEditing, value]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     let parsedValue: unknown = editValue;
 
     // Parse based on column type
@@ -51,7 +56,20 @@ export function TableCell({ column, value, isEditing, onSave, onCancel }: TableC
         parsedValue = editValue === 'true' || editValue === 'checked';
         break;
       case 'date':
-        // Keep as string for date
+        // Keep as string for date, but we can format it better if it's valid
+        if (parsedValue && typeof parsedValue === 'string') {
+          // Ensure consistent format
+          const d = new Date(parsedValue);
+          if (!isNaN(d.getTime())) {
+            parsedValue = d.toISOString().split('T')[0];
+          }
+        }
+        break;
+      case 'people':
+        // Pass array as is
+        break;
+      case 'link':
+        // Pass object as is
         break;
       case 'text':
       case 'long_text':
@@ -60,7 +78,15 @@ export function TableCell({ column, value, isEditing, onSave, onCancel }: TableC
         break;
     }
 
-    onSave(parsedValue);
+    setSaveStatus('saving');
+    try {
+      await onSave(parsedValue);
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    } catch (error) {
+      console.error('Save failed', error);
+      setSaveStatus('idle');
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -83,6 +109,7 @@ export function TableCell({ column, value, isEditing, onSave, onCancel }: TableC
       );
     }
 
+    const content = (() => {
     switch (column.column_type) {
       case 'checkbox':
         return (
@@ -116,12 +143,48 @@ export function TableCell({ column, value, isEditing, onSave, onCancel }: TableC
       case 'numbers':
         return (
           <span className="text-sm font-mono">
-            {typeof value === 'number' ? value.toLocaleString() : value}
+            {typeof value === 'number' ? value.toLocaleString() : String(value ?? '')}
           </span>
         );
+        case 'rating':
+          return (
+            <RatingCell
+              value={typeof value === 'number' ? value : null}
+              isEditing={false}
+              onSave={() => {}}
+              onCancel={() => {}}
+            />
+          );
+        case 'people':
+          return (
+            <PeopleCell
+              value={Array.isArray(value) ? value : []}
+              isEditing={false}
+              onSave={() => {}}
+              onCancel={() => {}}
+            />
+          );
+        case 'link':
+          return (
+            <LinkCell
+              value={value as any}
+              isEditing={false}
+              onSave={() => {}}
+              onCancel={() => {}}
+            />
+          );
       default:
         return <span className="text-sm">{String(value)}</span>;
     }
+    })();
+
+    return (
+      <div className="flex items-center gap-2 group">
+        {content}
+        {saveStatus === 'saving' && <Loader2 size={12} className="animate-spin text-[var(--accent)]" />}
+        {saveStatus === 'saved' && <Check size={12} className="text-[var(--success)]" />}
+      </div>
+    );
   }
 
   // Edit mode
@@ -176,6 +239,24 @@ export function TableCell({ column, value, isEditing, onSave, onCancel }: TableC
           }}
         />
       );
+    case 'people':
+      return (
+        <PeopleCell
+          value={Array.isArray(value) ? value : []}
+          isEditing={true}
+          onSave={onSave}
+          onCancel={onCancel}
+        />
+      );
+    case 'link':
+      return (
+        <LinkCell
+          value={value as any}
+          isEditing={true}
+          onSave={onSave}
+          onCancel={onCancel}
+        />
+      );
     case 'numbers':
       return (
         <input
@@ -210,6 +291,15 @@ export function TableCell({ column, value, isEditing, onSave, onCancel }: TableC
           }}
         />
       );
+      case 'rating':
+        return (
+          <RatingCell
+            value={typeof value === 'number' ? value : null}
+            isEditing={true}
+            onSave={(rating) => onSave(rating)}
+            onCancel={onCancel}
+          />
+        );
     default:
       return (
         <input

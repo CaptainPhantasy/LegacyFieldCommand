@@ -4,7 +4,8 @@ import { createJob, findJobByTitle, getJobIdFromUrl, getJobIdFromApi } from './h
 import { 
   getGateId, 
   completeArrivalGate, 
-  completeIntakeGate, 
+  completeIntakeGate,
+  completePhotosGate,
   completeMoistureGate,
   completeScopeGate,
   completeSignoffsGate,

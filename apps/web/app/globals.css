@@ -1,85 +1,303 @@
 @import "tailwindcss";
 
 :root {
-  /* Surfaces */
-  --bg-app: #08090c;
-  --bg-elevated: #11131a;
-  --bg-subtle: #181b24;
+  /* Monday.com Inspired Color System - Light Theme */
+  
+  /* Surfaces - White/light backgrounds */
+  --bg-app: #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-subtle: #f7f8f9;
+  --bg-hover: #f0f1f2;
+  --bg-active: #e8e9ea;
 
-  /* Borders */
-  --border-subtle: #232637;
-  --border-strong: #2f3548;
+  /* Borders - Subtle grays */
+  --border-subtle: #e1e3e6;
+  --border-strong: #c4c7cc;
+  --border-focus: #0073ea;
 
-  /* Text */
-  --text-main: #f5f7fb;
-  --text-muted: #a3a9bc;
-  --text-soft: #7c8294;
+  /* Text - Dark on light */
+  --text-primary: #323338;
+  --text-secondary: #676879;
+  --text-tertiary: #9ca3af;
+  --text-disabled: #c4c7cc;
+  --text-inverse: #ffffff;
 
-  /* Accent + status */
-  --accent: #1e63d8;       /* primary buttons, key segments */
-  --accent-soft: #1e63d81f;
-  --success: #28945b;
-  --warning: #e4a63a;
-  --danger: #c74a3b;
+  /* Accent - Monday.com Blue */
+  --accent: #0073ea;
+  --accent-hover: #0060c8;
+  --accent-active: #0052b3;
+  --accent-light: #e5f0ff;
+  --accent-soft: rgba(0, 115, 234, 0.1);
 
-  --gate-complete: #1e63d8;
-  --gate-current: #f5f7fb;
-  --gate-pending: #343a50;
+  /* Status Colors */
+  --success: #00c875;
+  --success-light: #e3fcef;
+  --warning: #ffc400;
+  --warning-light: #fff8e5;
+  --danger: #ff3838;
+  --danger-light: #ffe5e5;
+  --info: #0073ea;
+  --info-light: #e5f0ff;
 
-  /* Radii & shadows */
-  --radius-card: 12px;
+  /* Status Pills (Monday.com style) */
+  --status-new: #c4c7cc;
+  --status-working: #ffc400;
+  --status-done: #00c875;
+  --status-stuck: #ff3838;
+
+  /* Gate Colors (for field app) */
+  --gate-complete: #00c875;
+  --gate-current: #0073ea;
+  --gate-pending: #c4c7cc;
+
+  /* Spacing Scale (Monday.com uses 4px base) */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 24px;
+  --spacing-2xl: 32px;
+  --spacing-3xl: 48px;
+
+  /* Typography Scale */
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-base: 14px;
+  --font-size-md: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 32px;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Radii - Subtle rounding */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
   --radius-pill: 999px;
-  --shadow-soft: 0 10px 30px rgba(0,0,0,0.35);
 
-  /* Font Stack */
-  --font-system: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 
+  /* Shadows - Minimal, subtle */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-focus: 0 0 0 3px rgba(0, 115, 234, 0.2);
+
+  /* Font Stack - Clean sans-serif */
+  --font-system: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 
                  "Helvetica Neue", Arial, "Noto Sans", sans-serif;
 }
 
 @theme {
-  /* Colors */
+  /* Colors - Monday.com inspired */
   --color-app: var(--bg-app);
   --color-elevated: var(--bg-elevated);
   --color-subtle: var(--bg-subtle);
+  --color-hover: var(--bg-hover);
+  --color-active: var(--bg-active);
   
   --color-border-subtle: var(--border-subtle);
   --color-border-strong: var(--border-strong);
+  --color-border-focus: var(--border-focus);
 
-  --color-main: var(--text-main);
-  --color-muted: var(--text-muted);
-  --color-soft: var(--text-soft);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-text-disabled: var(--text-disabled);
+  --color-text-inverse: var(--text-inverse);
 
   --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-active: var(--accent-active);
+  --color-accent-light: var(--accent-light);
   --color-accent-soft: var(--accent-soft);
+
   --color-success: var(--success);
+  --color-success-light: var(--success-light);
   --color-warning: var(--warning);
+  --color-warning-light: var(--warning-light);
   --color-danger: var(--danger);
+  --color-danger-light: var(--danger-light);
+  --color-info: var(--info);
+  --color-info-light: var(--info-light);
+
+  --color-status-new: var(--status-new);
+  --color-status-working: var(--status-working);
+  --color-status-done: var(--status-done);
+  --color-status-stuck: var(--status-stuck);
 
   --color-gate-complete: var(--gate-complete);
   --color-gate-current: var(--gate-current);
   --color-gate-pending: var(--gate-pending);
 
   /* Shadows */
-  --shadow-soft: var(--shadow-soft);
+  --shadow-xs: var(--shadow-xs);
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-focus: var(--shadow-focus);
 
   /* Radii */
-  --radius-card: var(--radius-card);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
   --radius-pill: var(--radius-pill);
+
+  /* Spacing */
+  --spacing-xs: var(--spacing-xs);
+  --spacing-sm: var(--spacing-sm);
+  --spacing-md: var(--spacing-md);
+  --spacing-lg: var(--spacing-lg);
+  --spacing-xl: var(--spacing-xl);
+  --spacing-2xl: var(--spacing-2xl);
+  --spacing-3xl: var(--spacing-3xl);
 
   /* Font */
   --font-sans: var(--font-system);
 }
 
-/* Base Styles */
+/* Base Styles - Monday.com inspired */
+html, body {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
 body {
   background-color: var(--bg-app);
-  color: var(--text-main);
+  color: var(--text-primary);
   font-family: var(--font-system);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-regular);
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Utility classes overrides/customizations if needed */
+/* Remove glass morphism - use clean white backgrounds */
+.glass-basic,
+.card-glass {
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border-subtle) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+/* Monday.com style hover states */
+.hover-lift {
+  transition: all 0.2s ease;
+}
+
+.hover-lift:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+/* Focus states - Monday.com blue */
+*:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+/* Utility classes */
 .text-balance {
   text-wrap: balance;
+}
+
+/* Monday.com style buttons */
+.btn-primary {
+  background-color: var(--accent);
+  color: var(--text-inverse);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  background-color: var(--accent-hover);
+}
+
+.btn-primary:active {
+  background-color: var(--accent-active);
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background-color: var(--bg-hover);
+  border-color: var(--border-strong);
+}
+
+/* App Shell - Full Width Layout */
+.app-shell {
+  width: 100% !important;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-shell-inner {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 auto;
+  padding-left: var(--spacing-lg);
+  padding-right: var(--spacing-lg);
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .app-shell-inner {
+    padding-left: var(--spacing-xl);
+    padding-right: var(--spacing-xl);
+  }
+}
+
+@media (min-width: 1024px) {
+  .app-shell-inner {
+    padding-left: var(--spacing-2xl);
+    padding-right: var(--spacing-2xl);
+  }
+}
+
+@media (min-width: 1280px) {
+  .app-shell-inner {
+    padding-left: var(--spacing-3xl);
+    padding-right: var(--spacing-3xl);
+  }
+}
+
+/* Override any container classes that might constrain width */
+.app-shell-inner.container,
+.app-shell-inner[class*="container"],
+.app-shell-inner[class*="max-w"] {
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
+/* Ensure main content areas use full width */
+.app-shell main,
+.app-shell > main {
+  width: 100% !important;
+  max-width: 100% !important;
 }

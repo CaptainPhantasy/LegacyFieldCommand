@@ -4,12 +4,12 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { LogOut, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { Job, JobGate, GateStageName, GateStatus } from '@/types/gates';
+import type { JobWithGates, JobGate, GateStageName, GateStatus } from '@/types/gates';
 
 const GATES_ORDER: GateStageName[] = ['Arrival', 'Intake', 'Photos', 'Moisture/Equipment', 'Scope', 'Sign-offs', 'Departure'];
 
 interface FieldDashboardProps {
-  jobs: Array<Job & { gates: JobGate[]; nextGate?: JobGate; activeException?: boolean }>;
+  jobs: Array<JobWithGates & { nextGate?: JobGate; activeException?: boolean }>;
   userEmail?: string;
   onSignOut?: () => void;
 }
@@ -22,12 +22,35 @@ export default function FieldDashboard({
   const router = useRouter();
   
   const handleOpenGate = (jobId: string) => {
-    router.push(`/field/job/${jobId}`);
+    router.push(`/field/jobs/${jobId}`);
   };
 
   const handleSignOut = async () => {
     await fetch('/auth/signout', { method: 'POST' });
     router.push('/login');
+  };
+
+  const handleCleanupTestJobs = async () => {
+    if (!confirm('This will delete all test jobs. Are you sure?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/admin/cleanup-test-jobs', {
+        method: 'POST',
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert(`Deleted ${data.data.deleted} test jobs. Page will refresh.`);
+        window.location.reload();
+      } else {
+        alert(`Error: ${data.message || 'Failed to delete test jobs'}`);
+      }
+    } catch (error) {
+      alert(`Error: ${error instanceof Error ? error.message : 'Failed to delete test jobs'}`);
+    }
   };
 
   const stats = {
@@ -36,10 +59,25 @@ export default function FieldDashboard({
     flags: jobs.filter(j => j.activeException).length,
   };
 
+  // Count test jobs
+  const testJobPatterns = [
+    /^test\s+/i, /^validation\s+test/i, /^assign\s+test/i, /^e2e\s+test/i,
+    /^ios\s+test/i, /^api\s+test/i, /^assignment\s+test/i, /^chamber\s+test/i,
+    /^floor\s+plan\s+test/i, /^moisture\s+test/i, /^sync\s+test/i, /^manual\s+sync/i,
+    /^update\s+test/i, /^link\s+test/i, /^reverse\s+link\s+test/i, /^board\s+sync\s+test/i,
+    /^report\s+test/i, /^hydro\s+ui\s+test/i, /^integration\s+ui\s+test/i,
+    /^test\s+job\s*-\s*\d+$/i, /^validation\s+test\s*-\s*\d+$/i, /^assign\s+test\s*-\s*\d+$/i,
+    /^e2e\s+test\s+job\s*-\s*\d+$/i, /^ios\s+test\s+job\s*-\s*\d+$/i, /^api\s+test\s+job\s*-\s*\d+$/i,
+    /^assignment\s+test\s*-\s*\d+$/i,
+  ];
+  const testJobCount = jobs.filter(job => 
+    testJobPatterns.some(pattern => pattern.test((job.title || '').trim()))
+  ).length;
+
   return (
-    <div className="min-h-screen bg-app text-main pb-20 font-sans">
+    <div className="app-shell min-h-screen bg-app text-main pb-20 font-sans w-full">
       {/* App Bar */}
-      <header className="flex items-center justify-between px-4 py-4 border-b border-border-subtle bg-app sticky top-0 z-10">
+      <header className="flex items-center justify-between app-shell-inner py-4 border-b border-border-subtle bg-app sticky top-0 z-10 w-full">
         <div>
           <h1 className="text-[20px] font-semibold leading-tight text-main">My Jobs</h1>
           <p className="text-[13px] text-muted">Today's assigned visits</p>
@@ -56,13 +94,33 @@ export default function FieldDashboard({
         </div>
       </header>
 
-      <main className="px-4 py-6 max-w-3xl mx-auto space-y-8">
+      <main className="app-shell-inner py-6 space-y-8 w-full">
         {/* Overview Row */}
         <section className="grid grid-cols-3 gap-3">
           <StatsCard label="Visits today" value={stats.visitsToday} helper={`${stats.visitsToday} active jobs`} />
           <StatsCard label="Gates remaining" value={stats.gatesRemaining} helper="Across all active visits" />
           <StatsCard label="Flags" value={stats.flags} helper="Jobs with exceptions" />
         </section>
+
+        {/* Cleanup Test Jobs Button */}
+        {testJobCount > 0 && (
+          <section className="bg-warning-light border border-warning rounded-card p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-main">Test Jobs Detected</h3>
+                <p className="text-xs text-soft mt-1">
+                  Found {testJobCount} test jobs that can be cleaned up
+                </p>
+              </div>
+              <button
+                onClick={handleCleanupTestJobs}
+                className="px-4 py-2 bg-warning text-white rounded-pill text-sm font-medium hover:opacity-90 transition-opacity"
+              >
+                Clean Up Test Jobs
+              </button>
+            </div>
+          </section>
+        )}
 
         {/* Job Cards */}
         <section className="space-y-4">
@@ -107,7 +165,7 @@ function StatsCard({ label, value, helper }: { label: string; value: number; hel
   );
 }
 
-function JobCard({ job, onOpenGate }: { job: Job & { gates: JobGate[]; nextGate?: JobGate; activeException?: boolean }, onOpenGate: () => void }) {
+function JobCard({ job, onOpenGate }: { job: JobWithGates & { nextGate?: JobGate; activeException?: boolean }, onOpenGate: () => void }) {
   // Calculate gate progress
   // We need to map the gates to the 7 standard gates
   // Assuming job.gates contains the relevant gates.

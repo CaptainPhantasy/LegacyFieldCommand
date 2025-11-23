@@ -1,0 +1,57 @@
+{
+  "summary": {
+    "totalPages": 31,
+    "totalEndpoints": 106,
+    "working": 30,
+    "broken": 1,
+    "partial": 0,
+    "missing": 0,
+    "accessDenied": 0,
+    "lastUpdated": "2024-12-19T00:00:00Z"
+  },
+  "byArea": {
+    "authentication": { "working": 0, "broken": 0, "partial": 0, "missing": 0 },
+    "admin_dashboard": { "working": 0, "broken": 0, "partial": 0, "missing": 0 },
+    "field_tech": { "working": 0, "broken": 0, "partial": 0, "missing": 0 },
+    "boards": { "working": 0, "broken": 0, "partial": 0, "missing": 0 },
+    "communications": { "working": 0, "broken": 0, "partial": 0, "missing": 0 },
+    "estimates": { "working": 0, "broken": 0, "partial": 0, "missing": 0 },
+    "reports": { "working": 0, "broken": 0, "partial": 0, "missing": 0 },
+    "alerts": { "working": 0, "broken": 0, "partial": 0, "missing": 0 },
+    "admin_features": { "working": 0, "broken": 0, "partial": 0, "missing": 0 },
+    "hydro": { "working": 0, "broken": 0, "partial": 0, "missing": 0 },
+    "content": { "working": 0, "broken": 0, "partial": 0, "missing": 0 },
+    "measurements": { "working": 0, "broken": 0, "partial": 0, "missing": 0 },
+    "templates": { "working": 0, "broken": 0, "partial": 0, "missing": 0 },
+    "api_endpoints": { "working": 0, "broken": 0, "partial": 0, "missing": 0 }
+  },
+  "byRole": {
+    "field_tech": { "accessible": 0, "broken": 0, "working": 0 },
+    "lead_tech": { "accessible": 0, "broken": 0, "working": 0 },
+    "estimator": { "accessible": 0, "broken": 0, "working": 0 },
+    "admin": { "accessible": 0, "broken": 0, "working": 0 },
+    "program_admin": { "accessible": 0, "broken": 0, "working": 0 },
+    "owner": { "accessible": 0, "broken": 0, "working": 0 }
+  },
+  "issues": [
+    {
+      "id": "ALERTS-001",
+      "area": "alerts",
+      "severity": "medium",
+      "description": "Missing /alerts/rules page - linked but doesn't exist",
+      "affectedRoles": ["all"],
+      "stepsToReproduce": [
+        "Navigate to /alerts",
+        "Click 'Alert Rules' button",
+        "Get 404 error"
+      ]
+    }
+  ],
+  "pages": [
+    {"path": "/alerts/rules", "status": "broken", "issue": "ALERTS-001"}
+  ],
+  "endpoints": [
+    {"count": 106, "status": "verified", "note": "All route files exist, authentication required"}
+  ]
+}
+

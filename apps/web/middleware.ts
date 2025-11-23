@@ -32,7 +32,7 @@ export async function middleware(request: NextRequest) {
     // Apply rate limiting to API routes
     const identifier = 
       request.headers.get('x-user-id') || 
-      request.ip || 
+      request.headers.get('x-forwarded-for')?.split(',')[0] || 
       'anonymous'
 
     // Determine rate limit type based on endpoint

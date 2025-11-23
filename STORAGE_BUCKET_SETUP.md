@@ -5,6 +5,7 @@
 - `policies` ✅
 - `voice-recordings` ✅
 - `measurements` ✅
+- `item-attachments` ⚠️ **NEW - NEEDS TO BE CREATED**
 
 ## ⚠️ CRITICAL: Change job-photos to Private
 
@@ -53,6 +54,13 @@
 - **File size limit**: 100MB
 - **Allowed MIME types**: `*/*` (various 3D formats)
 - **Path format**: `measurements/{job_id}/{filename}`
+
+#### 5. `item-attachments` ⚠️ **NEW**
+- **Purpose**: File attachments on board items
+- **Public**: ❌ **NO** (Private/authenticated only)
+- **File size limit**: 50MB
+- **Allowed MIME types**: `*/*` (all file types)
+- **Path format**: `items/{item_id}/{filename}`
 
 ## RLS Policies Setup
 

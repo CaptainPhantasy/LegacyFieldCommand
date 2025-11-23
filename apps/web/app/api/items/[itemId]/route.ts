@@ -10,7 +10,8 @@ import { validateRequest, validateParams } from '@/lib/validation/validator';
 import { z } from 'zod';
 import { sanitizeError, createApiErrorFromSanitized } from '@/lib/api/error-handler';
 import { getCacheHeaders } from '@/lib/api/cache-headers';
-import { fireTriggers } from '@/lib/automation/trigger';
+import { fireTriggers } from '@/lib/automation/trigger'
+import { onBoardItemUpdated } from '@/lib/integration/automation-rules';
 
 const updateItemSchema = z.object({
   name: z.string().min(1).max(500).optional(),
@@ -161,6 +162,11 @@ export async function PUT(
       // Log but don't fail the request
       console.error('Error firing automation triggers:', triggerError);
     }
+
+    // Sync board item to job if linked (async, don't wait)
+    onBoardItemUpdated(itemId, supabase, user.id).catch(
+      (err) => console.error('Error syncing board item to job:', err)
+    );
 
     return successResponse(item);
   } catch (error) {

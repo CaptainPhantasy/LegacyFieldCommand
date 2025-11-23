@@ -39,7 +39,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
       return (
         <div className="app-shell">
-          <main className="app-shell-inner max-w-2xl py-12">
+          <main className="app-shell-inner py-12">
             <div className="glass-basic card-glass p-8 space-y-6">
               <div>
                 <h1 className="text-2xl font-semibold mb-2" style={{ color: 'var(--error)' }}>

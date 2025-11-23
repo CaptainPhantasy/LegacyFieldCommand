@@ -7,6 +7,7 @@
 
 import { useState } from 'react';
 import { useReadings, useCreateReading } from '@/hooks/useHydro';
+import type { PsychrometricReading } from '@/types/hydro';
 
 interface PsychrometricCaptureProps {
   chamberId: string;
@@ -111,7 +112,7 @@ export function PsychrometricCapture({ chamberId }: PsychrometricCaptureProps) {
             </label>
             <select
               value={location}
-              onChange={(e) => setLocation(e.target.value as any)}
+              onChange={(e) => setLocation(e.target.value as PsychrometricReading['location'])}
               className="w-full px-3 py-2 rounded border"
               style={{
                 backgroundColor: 'var(--background)',

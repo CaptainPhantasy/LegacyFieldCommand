@@ -33,7 +33,7 @@ const createColumnSchema = z.object({
   column_type: columnTypeEnum,
   position: z.number().int().min(0).optional(),
   width: z.number().int().min(50).max(1000).optional(),
-  settings: z.record(z.unknown()).optional(),
+  settings: z.record(z.string(), z.unknown()).optional(),
 });
 
 const listColumnsQuerySchema = z.object({

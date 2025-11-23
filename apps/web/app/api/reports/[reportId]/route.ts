@@ -118,10 +118,11 @@ export async function DELETE(
     }
 
     // Delete PDF from storage if exists
-    if (report.pdf_storage_path) {
+    const reportData = report as any;
+    if (reportData.pdf_storage_path) {
       await supabase.storage
         .from('reports')
-        .remove([report.pdf_storage_path]);
+        .remove([reportData.pdf_storage_path]);
     }
 
     // Delete report record

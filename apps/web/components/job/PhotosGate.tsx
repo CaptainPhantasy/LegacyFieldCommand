@@ -42,7 +42,7 @@ export default function PhotosGate({
          </div>
       </header>
 
-      <main className="flex-1 px-4 py-6 pb-24 max-w-3xl mx-auto w-full">
+      <main className="flex-1 px-4 py-6 pb-24 w-full">
         {/* Summary Line */}
         <div className="mb-6 flex items-baseline justify-between">
           <div>
@@ -83,7 +83,7 @@ export default function PhotosGate({
 
       {/* Action Buttons (Sticky Bottom) */}
       <div className="fixed bottom-0 left-0 right-0 bg-elevated border-t border-border-subtle p-4 z-20">
-        <div className="max-w-3xl mx-auto flex gap-3">
+        <div className="w-full max-w-6xl mx-auto flex gap-3">
           <button 
             onClick={onUpload}
             className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-pill bg-subtle border border-border-subtle text-main font-medium hover:bg-bg-subtle transition-colors"

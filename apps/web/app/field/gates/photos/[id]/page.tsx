@@ -388,7 +388,7 @@ export default function PhotosGatePage({ params }: PageProps) {
   if (!gate || !job) {
     return (
       <div className="app-shell">
-        <main className="app-shell-inner max-w-3xl">
+        <main className="app-shell-inner">
           <div className="glass-basic card-glass">
             <p style={{ color: 'var(--text-secondary)' }}>Loading photos gate...</p>
           </div>
@@ -401,7 +401,7 @@ export default function PhotosGatePage({ params }: PageProps) {
     <div className="app-shell">
       {/* Header with glass effect */}
       <header className="glass-basic sticky top-0 z-10 border-b" style={{ borderColor: 'var(--glass-border)' }}>
-        <div className="app-shell-inner max-w-4xl py-6">
+        <div className="app-shell-inner py-6">
           <button
             onClick={() => router.push(`/field/jobs/${job.id}`)}
             className="text-sm mb-4 transition-colors hover:opacity-70"
@@ -414,7 +414,7 @@ export default function PhotosGatePage({ params }: PageProps) {
         </div>
       </header>
 
-      <main className="app-shell-inner max-w-4xl space-y-6">
+      <main className="app-shell-inner space-y-6">
         {banner && (
           <div
             className="glass-basic card-glass border-l-4"

@@ -23,9 +23,9 @@ const createAutomationSchema = z.object({
     'status_changed',
     'dependency_completed',
   ]),
-  trigger_config: z.record(z.unknown()).optional(),
-  conditions: z.array(z.record(z.unknown())).optional(),
-  actions: z.array(z.record(z.unknown())).min(1, 'At least one action is required'),
+  trigger_config: z.record(z.string(), z.unknown()).optional(),
+  conditions: z.array(z.record(z.string(), z.unknown())).optional(),
+  actions: z.array(z.record(z.string(), z.unknown())).min(1, 'At least one action is required'),
 });
 
 const listAutomationsQuerySchema = z.object({

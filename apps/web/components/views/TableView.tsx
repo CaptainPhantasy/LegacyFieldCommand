@@ -5,34 +5,32 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
-import { useItems, useCreateItem, useUpdateColumnValues } from '@/hooks/useItems';
+import { useState, useMemo, useRef } from 'react';
+import { useItems, useCreateItem, useUpdateColumnValues, useDeleteItems } from '@/hooks/useItems';
 import { TableCell } from './TableCell';
+import { ItemDetailsPanel } from '@/components/boards/ItemDetailsPanel';
+import type { Column, Group } from '@/types/boards';
+import { Trash2 } from 'lucide-react';
 
 interface TableViewProps {
   boardId: string;
-  columns: Array<{
-    id: string;
-    title: string;
-    column_type: string;
-    position: number;
-    settings?: Record<string, unknown>;
-  }>;
-  groups: Array<{
-    id: string;
-    name: string;
-    color?: string;
-  }>;
+  columns: Column[];
+  groups: Group[];
 }
 
 export function TableView({ boardId, columns, groups }: TableViewProps) {
   const [editingCell, setEditingCell] = useState<{ itemId: string; columnId: string } | null>(null);
   const [newItemName, setNewItemName] = useState('');
-  const [isAddingItem, setIsAddingItem] = useState(false);
+  const [addItemError, setAddItemError] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
+  const addRowInputRef = useRef<HTMLInputElement | null>(null);
 
   const { data, isLoading } = useItems({ board_id: boardId, limit: 100 });
   const createItem = useCreateItem();
   const updateColumnValues = useUpdateColumnValues();
+  const deleteItems = useDeleteItems();
 
   // Sort columns by position
   const sortedColumns = useMemo(() => {
@@ -63,17 +61,59 @@ export function TableView({ boardId, columns, groups }: TableViewProps) {
   };
 
   const handleAddItem = async () => {
-    if (!newItemName.trim()) return;
+    if (!newItemName.trim()) {
+      setAddItemError('Item name is required');
+      return;
+    }
 
+    setAddItemError(null);
+    setIsCreating(true);
     try {
       await createItem.mutateAsync({
         board_id: boardId,
-        name: newItemName,
+        name: newItemName.trim(),
       });
       setNewItemName('');
-      setIsAddingItem(false);
-    } catch (error) {
+      setAddItemError(null);
+      // Keep input focused for quick addition of multiple items
+      addRowInputRef.current?.focus();
+    } catch (error: any) {
       console.error('Failed to create item:', error);
+      const errorMessage = error?.response?.data?.error?.message || error?.message || 'Failed to create item. Please try again.';
+      setAddItemError(errorMessage);
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const toggleSelection = (itemId: string) => {
+    const newSelection = new Set(selectedItemIds);
+    if (newSelection.has(itemId)) {
+      newSelection.delete(itemId);
+    } else {
+      newSelection.add(itemId);
+    }
+    setSelectedItemIds(newSelection);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedItemIds.size === sortedItems.length) {
+      setSelectedItemIds(new Set());
+    } else {
+      setSelectedItemIds(new Set(sortedItems.map((item) => item.id)));
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedItemIds.size === 0) return;
+    if (!confirm(`Are you sure you want to delete ${selectedItemIds.size} items?`)) return;
+
+    try {
+      await deleteItems.mutateAsync(Array.from(selectedItemIds));
+      setSelectedItemIds(new Set());
+    } catch (error) {
+      console.error('Failed to delete items:', error);
+      alert('Failed to delete items');
     }
   };
 
@@ -86,13 +126,49 @@ export function TableView({ boardId, columns, groups }: TableViewProps) {
   }
 
   return (
-    <div className="w-full overflow-x-auto">
+    <div className="w-full overflow-x-auto relative">
+      {/* Bulk Actions Toolbar */}
+      {selectedItemIds.size > 0 && (
+        <div className="sticky top-0 left-0 right-0 z-20 bg-[var(--elevated)] border-b border-[var(--border-subtle)] px-4 py-2 flex items-center justify-between shadow-md mb-[-1px]">
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-medium text-[var(--text-primary)]">
+              {selectedItemIds.size} selected
+            </span>
+            <div className="h-4 w-px bg-[var(--border-subtle)]" />
+            <button
+              onClick={handleDeleteSelected}
+              className="flex items-center gap-2 px-3 py-1.5 text-sm text-[var(--error)] hover:bg-[var(--bg-tertiary)] rounded-md transition-colors"
+            >
+              <Trash2 size={16} />
+              Delete
+            </button>
+          </div>
+          <button
+            onClick={() => setSelectedItemIds(new Set())}
+            className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+          >
+            Clear selection
+          </button>
+        </div>
+      )}
+
       <table className="w-full border-collapse">
         <thead>
           <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+            {/* Checkbox column */}
+            <th
+              className="w-10 px-4 py-3 sticky left-0 z-10 bg-[var(--elevated)]"
+            >
+              <input
+                type="checkbox"
+                checked={sortedItems.length > 0 && selectedItemIds.size === sortedItems.length}
+                onChange={toggleSelectAll}
+                className="cursor-pointer"
+              />
+            </th>
             {/* Name column */}
             <th
-              className="px-4 py-3 text-left text-sm font-semibold sticky left-0 z-10"
+              className="px-4 py-3 text-left text-sm font-semibold sticky left-10 z-10"
               style={{
                 backgroundColor: 'var(--elevated)',
                 color: 'var(--text-primary)',
@@ -122,16 +198,27 @@ export function TableView({ boardId, columns, groups }: TableViewProps) {
           {sortedItems.map((item) => (
             <tr
               key={item.id}
-              className="hover:bg-hover-subtle transition-colors"
+              className={`hover:bg-hover-subtle transition-colors ${
+                selectedItemIds.has(item.id) ? 'bg-[var(--accent-subtle)]' : ''
+              }`}
               style={{ borderBottom: '1px solid var(--border-subtle)' }}
             >
+              {/* Checkbox cell */}
+              <td className="px-4 py-3 sticky left-0 z-10 bg-inherit">
+                <input
+                  type="checkbox"
+                  checked={selectedItemIds.has(item.id)}
+                  onChange={() => toggleSelection(item.id)}
+                  className="cursor-pointer"
+                />
+              </td>
               {/* Name cell */}
               <td
-                className="px-4 py-3 sticky left-0 z-10"
+                className="px-4 py-3 sticky left-10 z-10 cursor-pointer hover:text-[var(--accent)] bg-inherit"
                 style={{
-                  backgroundColor: 'var(--elevated)',
                   color: 'var(--text-primary)',
                 }}
+                onClick={() => setSelectedItemId(item.id)}
               >
                 {item.name}
               </td>
@@ -160,60 +247,76 @@ export function TableView({ boardId, columns, groups }: TableViewProps) {
             </tr>
           ))}
 
-          {/* Add new item row */}
-          {isAddingItem ? (
-            <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+          {/* Always-visible add new item row */}
+          <tr
+            style={{ borderBottom: '1px solid var(--border-subtle)' }}
+            className="hover:bg-hover-subtle transition-colors"
+            onClick={(e) => {
+              // Focus input when clicking anywhere in the row
+              if (e.target !== addRowInputRef.current && !addRowInputRef.current?.contains(e.target as Node)) {
+                addRowInputRef.current?.focus();
+              }
+            }}
+          >
+            <td className="px-4 py-3 sticky left-0 z-10 bg-[var(--elevated)]" />
               <td
-                className="px-4 py-3 sticky left-0 z-10"
+              className="px-4 py-3 sticky left-10 z-10"
                 style={{
                   backgroundColor: 'var(--elevated)',
                 }}
               >
+              <div className="flex items-center gap-2">
                 <input
+                  ref={addRowInputRef}
                   type="text"
                   value={newItemName}
-                  onChange={(e) => setNewItemName(e.target.value)}
+                  onChange={(e) => {
+                    setNewItemName(e.target.value);
+                    setAddItemError(null);
+                  }}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
+                    if (e.key === 'Enter' && !isCreating) {
+                      e.preventDefault();
                       handleAddItem();
                     } else if (e.key === 'Escape') {
-                      setIsAddingItem(false);
                       setNewItemName('');
+                      setAddItemError(null);
                     }
                   }}
                   className="w-full px-2 py-1 rounded border"
                   style={{
                     backgroundColor: 'var(--background)',
-                    borderColor: 'var(--border-subtle)',
+                    borderColor: addItemError ? 'var(--error)' : 'var(--border-subtle)',
                     color: 'var(--text-primary)',
                   }}
                   placeholder="Item name"
-                  autoFocus
+                  disabled={isCreating}
                 />
+                {isCreating && (
+                  <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                    Creating...
+                  </span>
+                )}
+              </div>
+              {addItemError && (
+                <p className="mt-1 text-xs" style={{ color: 'var(--error)' }}>
+                  {addItemError}
+                </p>
+              )}
               </td>
               {sortedColumns.map((column) => (
                 <td key={column.id} className="px-4 py-3" />
               ))}
             </tr>
-          ) : (
-            <tr>
-              <td
-                colSpan={sortedColumns.length + 1}
-                className="px-4 py-3 text-center"
-                style={{ color: 'var(--text-secondary)' }}
-              >
-                <button
-                  onClick={() => setIsAddingItem(true)}
-                  className="text-sm hover:underline"
-                  style={{ color: 'var(--accent)' }}
-                >
-                  + Add item
-                </button>
-              </td>
-            </tr>
-          )}
         </tbody>
       </table>
+
+      <ItemDetailsPanel
+        itemId={selectedItemId}
+        boardId={boardId}
+        columns={columns}
+        onClose={() => setSelectedItemId(null)}
+      />
     </div>
   );
 }

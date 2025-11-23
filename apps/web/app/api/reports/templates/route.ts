@@ -14,7 +14,7 @@ const createTemplateSchema = z.object({
   name: z.string().min(1, 'Name is required').max(200),
   template_type: z.enum(['initial', 'hydro', 'full', 'custom']),
   description: z.string().max(1000).optional(),
-  sections: z.array(z.record(z.unknown())).optional(),
+  sections: z.array(z.record(z.string(), z.unknown())).optional(),
   is_default: z.boolean().optional(),
 });
 

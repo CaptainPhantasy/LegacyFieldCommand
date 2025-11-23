@@ -36,7 +36,7 @@ export default async function NewJobPage() {
       </header>
 
       <main>
-        <div className="app-shell-inner max-w-2xl">
+        <div className="app-shell-inner">
           <form action={createJob} className="glass-basic card-glass space-y-6">
             <div>
               <Label htmlFor="title">Job Title *</Label>

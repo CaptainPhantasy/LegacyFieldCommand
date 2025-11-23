@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin, errorResponse, successResponse, ApiError } from '@/lib/api/middleware'
+import { onJobUpdated } from '@/lib/integration/automation-rules'
 
 /**
  * GET /api/admin/jobs/[jobId]
@@ -89,6 +90,11 @@ export async function PUT(
     if (updateError) {
       throw new ApiError(updateError.message, 500)
     }
+
+    // Sync job to board (async, don't wait)
+    onJobUpdated(jobId, supabase, job.updated_by || '').catch(
+      (err) => console.error('Error syncing job to board:', err)
+    )
 
     return successResponse({ job })
   } catch (error) {

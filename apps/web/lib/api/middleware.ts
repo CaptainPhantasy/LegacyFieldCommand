@@ -59,7 +59,11 @@ export async function requireAdmin(request: NextRequest): Promise<{
 
   const adminRoles: AuthenticatedUser['role'][] = ['admin', 'owner', 'program_admin']
   if (!adminRoles.includes(user.role)) {
-    throw new ApiError('Forbidden: Admin access required', 403)
+    throw new ApiError(
+      `This action requires administrator privileges. Your current role is ${user.role}. Please contact your administrator if you need access.`,
+      403,
+      'FORBIDDEN_ADMIN_REQUIRED'
+    )
   }
 
   return { user, supabase }

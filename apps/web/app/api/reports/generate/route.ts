@@ -14,7 +14,7 @@ const generateReportSchema = z.object({
   job_id: z.string().uuid('Invalid job ID'),
   template_id: z.string().uuid().optional(),
   report_type: z.enum(['initial', 'hydro', 'full', 'custom']),
-  configuration: z.record(z.unknown()).optional(),
+  configuration: z.record(z.string(), z.unknown()).optional(),
 });
 
 /**

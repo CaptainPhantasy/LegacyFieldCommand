@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth, errorResponse, successResponse, ApiError } from '@/lib/api/middleware'
+import { orchestrator } from '@/lib/llm'
 
 /**
  * POST /api/communications/voice/interpret
@@ -41,28 +42,67 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // TODO: Integrate with AI/LLM service for interpretation
-    // For now, we'll create a stub that returns mock structured data
-    // In production, this would:
-    // 1. Send text to LLM (OpenAI GPT-4, Claude, etc.)
-    // 2. Use prompt engineering to extract structured data
-    // 3. Return structured interpretation
+    // Try LLM to interpret voice text, fallback to stub if it fails
+    const useAI = body.useAI !== false // Default to true
+    let interpretation: any = null
+    let llmMetadata: any = null
 
-    const mockInterpretation = {
-      intent: 'damage_description',
-      entities: {
-        damageTypes: ['water', 'flooring'],
-        rooms: ['kitchen', 'living room'],
-        severity: 'moderate',
-      },
-      extractedData: {
-        customerNotes: 'Customer mentioned water damage in kitchen and living room',
-        damageDescription: 'Water damage affecting flooring in kitchen and living room areas',
-        quoteElements: [],
-        actionItems: ['Assess kitchen flooring', 'Assess living room flooring'],
-      },
-      confidence: 0.85,
-      provider: 'stub', // Will be 'openai-gpt4', 'claude', etc. in production
+    if (useAI) {
+      try {
+        // Use LLM orchestrator to interpret voice text
+        const llmResult = await orchestrator.process({
+          useCase: 'voice_interpretation',
+          input: body.text,
+          context: {
+            jobId: body.jobId,
+            userId: user.id,
+          },
+          options: {
+            includeActions: true,
+            includeContext: true,
+          },
+        })
+
+        // Parse interpretation from LLM response
+        try {
+          interpretation = JSON.parse(llmResult.response)
+          interpretation.provider = llmResult.metadata?.provider === 'anthropic' 
+            ? 'claude-haiku-4.5' 
+            : llmResult.metadata?.model || 'llm'
+          llmMetadata = {
+            model: llmResult.metadata?.model,
+            provider: llmResult.metadata?.provider,
+            usage: llmResult.metadata?.usage,
+            confidence: llmResult.metadata?.confidence || interpretation.confidence,
+          }
+        } catch (parseError) {
+          console.error('Failed to parse LLM response as JSON:', parseError)
+          throw new Error('LLM returned invalid JSON')
+        }
+      } catch (llmError) {
+        console.warn('LLM voice interpretation failed, falling back to stub:', llmError)
+        // Fall through to stub implementation
+      }
+    }
+
+    // Fallback to stub if LLM not used or failed
+    if (!interpretation) {
+      interpretation = {
+        intent: 'damage_description',
+        entities: {
+          damageTypes: ['water', 'flooring'],
+          rooms: ['kitchen', 'living room'],
+          severity: 'moderate',
+        },
+        extractedData: {
+          customerNotes: 'Customer mentioned water damage in kitchen and living room',
+          damageDescription: 'Water damage affecting flooring in kitchen and living room areas',
+          quoteElements: [],
+          actionItems: ['Assess kitchen flooring', 'Assess living room flooring'],
+        },
+        confidence: 0.85,
+        provider: 'stub',
+      }
     }
 
     // Update communication record if communicationId provided
@@ -70,7 +110,7 @@ export async function POST(request: NextRequest) {
       const { data: updatedComm, error: updateError } = await supabase
         .from('communications')
         .update({
-          voice_interpretation: mockInterpretation,
+          voice_interpretation: interpretation,
         })
         .eq('id', body.communicationId)
         .select()
@@ -82,14 +122,24 @@ export async function POST(request: NextRequest) {
 
       return successResponse({
         communication: updatedComm,
-        interpretation: mockInterpretation,
-        message: 'Voice interpreted successfully (stub implementation). Replace with real AI service.',
+        interpretation: {
+          ...interpretation,
+          ...(llmMetadata ? { metadata: llmMetadata } : {}),
+        },
+        message: interpretation.provider !== 'stub' 
+          ? `Voice interpreted successfully using ${interpretation.provider}.`
+          : 'Voice interpreted successfully (stub implementation).',
       })
     }
 
     return successResponse({
-      interpretation: mockInterpretation,
-      message: 'Voice interpreted successfully (stub implementation). Replace with real AI service.',
+      interpretation: {
+        ...interpretation,
+        ...(llmMetadata ? { metadata: llmMetadata } : {}),
+      },
+      message: interpretation.provider !== 'stub' 
+        ? `Voice interpreted successfully using ${interpretation.provider}.`
+        : 'Voice interpreted successfully (stub implementation).',
     })
   } catch (error) {
     return errorResponse(error)

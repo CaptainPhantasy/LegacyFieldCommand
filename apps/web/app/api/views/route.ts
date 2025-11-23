@@ -16,7 +16,7 @@ const createViewSchema = z.object({
   board_id: z.string().uuid('Invalid board ID'),
   name: z.string().min(1, 'View name is required').max(200),
   view_type: viewTypeEnum,
-  settings: z.record(z.unknown()).optional(),
+  settings: z.record(z.string(), z.unknown()).optional(),
   is_default: z.boolean().optional(),
 });
 

@@ -44,7 +44,7 @@ export async function validateRequest<T>(
   } catch (error) {
     if (error instanceof ZodError) {
       // Format Zod errors into user-friendly messages
-      const errors = error.errors.map((err) => {
+      const errors = error.issues.map((err) => {
         const path = err.path.join('.');
         return `${path ? `${path}: ` : ''}${err.message}`;
       });
@@ -91,7 +91,7 @@ export function validateQuery<T>(
     return { data };
   } catch (error) {
     if (error instanceof ZodError) {
-      const errors = error.errors.map((err) => {
+      const errors = error.issues.map((err) => {
         const path = err.path.join('.');
         return `${path ? `${path}: ` : ''}${err.message}`;
       });
@@ -143,7 +143,7 @@ export function validateParams<T>(
     return { data };
   } catch (error) {
     if (error instanceof ZodError) {
-      const errors = error.errors.map((err) => {
+      const errors = error.issues.map((err) => {
         const path = err.path.join('.');
         return `${path ? `${path}: ` : ''}${err.message}`;
       });

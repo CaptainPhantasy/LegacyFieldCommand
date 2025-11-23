@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth, errorResponse, successResponse, ApiError } from '@/lib/api/middleware'
 
 /**
- * POST /api/estimates/[estimateId]/export
+ * GET /api/estimates/[estimateId]/export
  * Export estimate to Xactimate format
  * 
  * Query params:
  * - format: 'csv' | 'excel' | 'json' (default: 'csv')
  */
-export async function POST(
+export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ estimateId: string }> }
 ) {

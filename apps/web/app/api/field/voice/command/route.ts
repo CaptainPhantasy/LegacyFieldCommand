@@ -1,35 +1,80 @@
 import { createClient } from '@/utils/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { orchestrator } from '@/lib/llm'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user: authUser } } = await supabase.auth.getUser()
 
-  if (!user) {
+  if (!authUser) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const body = await request.json()
-  const { command, context } = body
+  const { command, context, useLLM } = body
 
   if (!command || typeof command !== 'string') {
     return NextResponse.json({ error: 'Command is required' }, { status: 400 })
   }
 
-  // Normalize command
-  const normalizedCommand = command.toLowerCase().trim()
-
-  // Intent recognition
+  // Try LLM first if enabled (default: true), fallback to pattern matching
+  const useAI = useLLM !== false // Default to true
   let intent = 'unknown'
   let action = ''
   let data: any = {}
   let response = ''
+  let llmMetadata: any = null
+
+  if (useAI) {
+    try {
+      // Use LLM orchestrator to process voice command
+      const llmResult = await orchestrator.process({
+        useCase: 'voice_command',
+        input: command,
+        context: {
+          jobId: context?.jobId,
+          gateId: context?.gateId,
+          userId: authUser.id,
+          userRole: 'field_tech', // Could be enhanced to get from user profile
+        },
+        options: {
+          includeActions: true,
+          includeContext: true,
+        },
+      })
+
+      // Parse intent data from LLM response
+      try {
+        const intentData = JSON.parse(llmResult.response)
+        intent = intentData.intent || 'unknown'
+        action = intentData.action || ''
+        data = intentData.data || {}
+        response = intentData.response || 'Command processed'
+        llmMetadata = {
+          model: llmResult.metadata?.model,
+          provider: llmResult.metadata?.provider,
+          confidence: llmResult.metadata?.confidence || intentData.confidence,
+        }
+      } catch (parseError) {
+        console.error('Failed to parse LLM response as JSON:', parseError)
+        // Fall through to pattern matching
+      }
+    } catch (llmError) {
+      console.warn('LLM voice command processing failed, falling back to pattern matching:', llmError)
+      // Fall through to pattern matching
+    }
+  }
+
+  // Fallback to pattern matching if LLM not used or failed
+  if (intent === 'unknown' && (!useAI || !response)) {
+    // Normalize command
+    const normalizedCommand = command.toLowerCase().trim()
 
   // Get user's assigned jobs
   const { data: jobs } = await supabase
     .from('jobs')
     .select('*')
-    .eq('lead_tech_id', user.id)
+    .eq('lead_tech_id', authUser.id)
     .order('created_at', { ascending: false })
     .limit(1)
 
@@ -134,8 +179,9 @@ export async function POST(request: NextRequest) {
     } else {
       response = 'No job selected.'
     }
-  } else {
-    response = `I didn't understand that command. Try: "show my jobs", "start arrival gate", "take photo", "complete arrival gate", or "log exception: [reason]".`
+    } else {
+      response = `I didn't understand that command. Try: "show my jobs", "start arrival gate", "take photo", "complete arrival gate", or "log exception: [reason]".`
+    }
   }
 
   return NextResponse.json({
@@ -143,6 +189,7 @@ export async function POST(request: NextRequest) {
     action,
     data,
     response,
+    ...(llmMetadata ? { metadata: llmMetadata } : {}),
   })
 }
 

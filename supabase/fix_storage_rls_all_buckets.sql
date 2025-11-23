@@ -308,3 +308,93 @@ WHERE schemaname = 'storage'
   AND (qual LIKE '%measurements%' OR with_check LIKE '%measurements%')
 ORDER BY policyname;
 
+-- ============================================================================
+-- ITEM-ATTACHMENTS BUCKET (should be PRIVATE)
+-- ============================================================================
+
+DROP POLICY IF EXISTS "Users can upload attachments for accessible items" ON storage.objects;
+DROP POLICY IF EXISTS "Users can view attachments for accessible items" ON storage.objects;
+DROP POLICY IF EXISTS "Users can delete their own attachments" ON storage.objects;
+DROP POLICY IF EXISTS "Admins can delete any attachment" ON storage.objects;
+
+-- Users can upload attachments for items they can access (via board)
+-- Path format: items/{item_id}/{filename}
+CREATE POLICY "Users can upload attachments for accessible items"
+ON storage.objects
+FOR INSERT
+TO authenticated
+WITH CHECK (
+  bucket_id = 'item-attachments'
+  AND auth.uid() IS NOT NULL
+  AND EXISTS (
+    SELECT 1
+    FROM public.items
+    WHERE items.id::text = (string_to_array(name, '/'))[2]
+      AND EXISTS (
+        SELECT 1
+        FROM public.boards
+        WHERE boards.id = items.board_id
+      )
+  )
+);
+
+-- Users can view attachments for items they can access
+CREATE POLICY "Users can view attachments for accessible items"
+ON storage.objects
+FOR SELECT
+TO authenticated
+USING (
+  bucket_id = 'item-attachments'
+  AND auth.uid() IS NOT NULL
+  AND EXISTS (
+    SELECT 1
+    FROM public.items
+    WHERE items.id::text = (string_to_array(name, '/'))[2]
+      AND EXISTS (
+        SELECT 1
+        FROM public.boards
+        WHERE boards.id = items.board_id
+      )
+  )
+);
+
+-- Users can delete their own attachments
+CREATE POLICY "Users can delete their own attachments"
+ON storage.objects
+FOR DELETE
+TO authenticated
+USING (
+  bucket_id = 'item-attachments'
+  AND auth.uid() IS NOT NULL
+  AND EXISTS (
+    SELECT 1
+    FROM public.item_attachments
+    WHERE item_attachments.storage_path = name
+      AND item_attachments.user_id = auth.uid()
+  )
+);
+
+-- Admins can delete any attachment
+CREATE POLICY "Admins can delete any attachment"
+ON storage.objects
+FOR DELETE
+TO authenticated
+USING (
+  bucket_id = 'item-attachments'
+  AND auth.uid() IS NOT NULL
+  AND EXISTS (
+    SELECT 1
+    FROM public.profiles
+    WHERE profiles.id = auth.uid()
+      AND profiles.role IN ('admin', 'owner')
+  )
+);
+
+-- Item-attachments bucket
+SELECT 'item-attachments' as bucket, policyname, cmd
+FROM pg_policies
+WHERE schemaname = 'storage'
+  AND tablename = 'objects'
+  AND (qual LIKE '%item-attachments%' OR with_check LIKE '%item-attachments%')
+ORDER BY policyname;
+

@@ -3,7 +3,7 @@
 import React from 'react';
 import { ChevronLeft, AlertTriangle, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { Job, JobGate, GateStageName, MoistureData, Reading } from '@/types/gates';
+import type { JobWithGates, JobGate, GateStageName, MoistureData, Reading } from '@/types/gates';
 import { useRouter } from 'next/navigation';
 import { addMoistureReading, completeGate, logException } from '@/app/actions/gates';
 import ReadingDialog, { ReadingData } from './ReadingDialog';
@@ -21,7 +21,7 @@ const GATE_DESCRIPTIONS: Record<GateStageName, string> = {
 };
 
 interface JobDetailProps {
-  job: Job & { gates: JobGate[]; currentGate?: JobGate };
+  job: JobWithGates & { currentGate?: JobGate };
   userEmail?: string;
 }
 
@@ -119,7 +119,7 @@ export default function JobDetail({
         <span className="text-sm text-muted">{userEmail}</span>
       </header>
 
-      <main className="px-4 py-6 max-w-3xl mx-auto space-y-8">
+      <main className="px-4 py-6 w-full space-y-8">
         {/* Job Summary Block */}
         <section className="space-y-2">
           <h2 className="text-2xl font-bold text-main">{job.title}</h2>
@@ -137,7 +137,7 @@ export default function JobDetail({
               // Logic for stepper state:
               // Complete if gate status is 'complete' OR if index < currentGateIndex
               // Current if it matches currentGateIndex
-              const gate = job.gates.find(g => g.stage_name === stage);
+              const gate = (job.gates || []).find(g => g.stage_name === stage);
               const isComplete = gate?.status === 'complete';
               const isCurrent = job.currentGate?.stage_name === stage;
               
@@ -241,7 +241,7 @@ export default function JobDetail({
 
       {/* Bottom Action Bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-elevated border-t border-border-subtle p-4 z-20">
-        <div className="max-w-3xl mx-auto flex gap-3">
+        <div className="w-full max-w-6xl mx-auto flex gap-3">
           <button 
             onClick={handleLogException}
             className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-pill border border-border-strong text-muted font-medium hover:bg-subtle hover:text-main transition-colors"

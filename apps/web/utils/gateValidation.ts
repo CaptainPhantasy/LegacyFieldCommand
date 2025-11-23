@@ -1,7 +1,7 @@
 // Gate validation utilities for web app
 // Ported from mobile app
 
-import type { JobGate, JobPhoto } from '@/types/gates'
+import type { JobGate, JobPhoto, PhotoMetadata } from '@/types/gates'
 
 export interface GateValidationResult {
   isValid: boolean
@@ -38,7 +38,7 @@ function validateArrivalGate(
 ): GateValidationResult {
   const arrivalPhotos = photos.filter(p => 
     p.gate_id === gate.id && 
-    JSON.parse(p.metadata || '{}').type === 'arrival'
+    (typeof p.metadata === 'string' ? JSON.parse(p.metadata || '{}') : p.metadata)?.type === 'arrival'
   )
 
   if (arrivalPhotos.length === 0 && !gate.requires_exception) {
@@ -68,9 +68,11 @@ function validatePhotosGate(
   photos.forEach(photo => {
     try {
       // Handle metadata - could be object or string
-      let metadata = photo.metadata
-      if (typeof metadata === 'string') {
-        metadata = JSON.parse(metadata || '{}')
+      let metadata: PhotoMetadata = {}
+      if (typeof photo.metadata === 'string') {
+        metadata = JSON.parse(photo.metadata || '{}') as PhotoMetadata
+      } else if (photo.metadata) {
+        metadata = photo.metadata
       }
       const room = metadata?.room
       const type = metadata?.type
@@ -189,9 +191,11 @@ export async function validateRoomConsistency(
   const photosByRoom: Record<string, boolean> = {}
   photos.forEach(photo => {
     try {
-      let metadata = photo.metadata
-      if (typeof metadata === 'string') {
-        metadata = JSON.parse(metadata || '{}')
+      let metadata: PhotoMetadata = {}
+      if (typeof photo.metadata === 'string') {
+        metadata = JSON.parse(photo.metadata || '{}') as PhotoMetadata
+      } else if (photo.metadata) {
+        metadata = photo.metadata
       }
       const room = metadata?.room
       if (room) {
@@ -207,9 +211,10 @@ export async function validateRoomConsistency(
   let scopeData: { rooms?: string[] } = {}
   try {
     if (typeof scopeGate.metadata === 'string') {
-      scopeData = JSON.parse(scopeGate.metadata || '{}')
-    } else {
-      scopeData = scopeGate.metadata || {}
+      const parsed = JSON.parse(scopeGate.metadata || '{}') as { rooms?: string[] }
+      scopeData = parsed
+    } else if (scopeGate.metadata && typeof scopeGate.metadata === 'object') {
+      scopeData = scopeGate.metadata as { rooms?: string[] }
     }
   } catch (e) {
     // Invalid metadata

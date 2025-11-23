@@ -5,63 +5,21 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-
-interface Chamber {
-  id: string;
-  job_id: string;
-  name: string;
-  description?: string;
-  chamber_type: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface PsychrometricReading {
-  id: string;
-  chamber_id: string;
-  room_id?: string;
-  reading_date: string;
-  reading_time?: string;
-  location: 'exterior' | 'unaffected' | 'affected' | 'hvac';
-  ambient_temp_f?: number;
-  relative_humidity?: number;
-  grains_per_pound?: number;
-  notes?: string;
-}
-
-interface MoisturePoint {
-  id: string;
-  chamber_id: string;
-  room_id?: string;
-  floor_plan_id?: string;
-  x_position?: number;
-  y_position?: number;
-  material_type?: string;
-  moisture_reading?: number;
-  reading_unit: string;
-  notes?: string;
-}
-
-interface EquipmentLog {
-  id: string;
-  job_id: string;
-  chamber_id?: string;
-  room_id?: string;
-  equipment_type: string;
-  equipment_name?: string;
-  asset_id?: string;
-  quantity: number;
-  start_date: string;
-  end_date?: string;
-  is_active: boolean;
-  notes?: string;
-}
+import type { 
+  Chamber, 
+  PsychrometricReading, 
+  MoisturePoint, 
+  EquipmentLog,
+  ChambersResponse,
+  ReadingsResponse,
+  MoisturePointsResponse,
+  EquipmentResponse
+} from '@/types/hydro';
 
 /**
  * Fetch chambers for a job
  */
-async function fetchChambers(jobId: string): Promise<{ chambers: Chamber[] }> {
+async function fetchChambers(jobId: string): Promise<ChambersResponse> {
   const response = await fetch(`/api/hydro/chambers?job_id=${jobId}`);
   if (!response.ok) throw new Error('Failed to fetch chambers');
   const data = await response.json();
@@ -85,7 +43,7 @@ async function createChamber(chamberData: Partial<Chamber>): Promise<Chamber> {
 /**
  * Fetch psychrometric readings
  */
-async function fetchReadings(chamberId: string): Promise<{ readings: PsychrometricReading[] }> {
+async function fetchReadings(chamberId: string): Promise<ReadingsResponse> {
   const response = await fetch(`/api/hydro/psychrometrics?chamber_id=${chamberId}&limit=20`);
   if (!response.ok) throw new Error('Failed to fetch readings');
   const data = await response.json();
@@ -109,7 +67,7 @@ async function createReading(readingData: Partial<PsychrometricReading>): Promis
 /**
  * Fetch moisture points
  */
-async function fetchMoisturePoints(chamberId: string): Promise<{ moisture_points: MoisturePoint[] }> {
+async function fetchMoisturePoints(chamberId: string): Promise<MoisturePointsResponse> {
   const response = await fetch(`/api/hydro/moisture?chamber_id=${chamberId}&limit=100`);
   if (!response.ok) throw new Error('Failed to fetch moisture points');
   const data = await response.json();
@@ -133,7 +91,7 @@ async function createMoisturePoint(pointData: Partial<MoisturePoint>): Promise<M
 /**
  * Fetch equipment logs
  */
-async function fetchEquipment(jobId: string): Promise<{ equipment: EquipmentLog[] }> {
+async function fetchEquipment(jobId: string): Promise<EquipmentResponse> {
   const response = await fetch(`/api/hydro/equipment?job_id=${jobId}`);
   if (!response.ok) throw new Error('Failed to fetch equipment');
   const data = await response.json();

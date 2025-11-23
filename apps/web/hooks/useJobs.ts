@@ -6,32 +6,8 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/api/react-query';
-
-interface Job {
-  id: string;
-  title: string;
-  status: string;
-  created_at: string;
-  [key: string]: unknown;
-}
-
-interface JobsResponse {
-  jobs: Job[];
-  pagination: {
-    cursor: string | null;
-    limit: number;
-    hasMore: boolean;
-  };
-}
-
-interface JobsFilters {
-  status?: string;
-  leadTechId?: string;
-  search?: string;
-  cursor?: string;
-  limit?: number;
-  direction?: 'forward' | 'backward';
-}
+import type { Job, JobGate, JobWithGates } from '@/types/gates';
+import type { JobsResponse, JobsFilters } from '@/types/jobs';
 
 /**
  * Fetch jobs from API
@@ -58,7 +34,7 @@ async function fetchJobs(filters?: JobsFilters): Promise<JobsResponse> {
 /**
  * Fetch single job
  */
-async function fetchJob(jobId: string): Promise<{ job: Job; gates: unknown[] }> {
+async function fetchJob(jobId: string): Promise<{ job: Job; gates: JobGate[] }> {
   const response = await fetch(`/api/admin/jobs/${jobId}`);
   if (!response.ok) {
     throw new Error('Failed to fetch job');
@@ -73,7 +49,7 @@ async function fetchJob(jobId: string): Promise<{ job: Job; gates: unknown[] }> 
  */
 export function useJobs(filters?: JobsFilters) {
   return useQuery({
-    queryKey: queryKeys.jobs.list(filters),
+    queryKey: queryKeys.jobs.list(filters as Record<string, unknown>),
     queryFn: () => fetchJobs(filters),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });

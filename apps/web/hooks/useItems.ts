@@ -5,53 +5,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-
-interface ColumnValue {
-  id: string;
-  column_id: string;
-  value: unknown;
-  text_value?: string;
-  numeric_value?: number;
-  columns?: {
-    id: string;
-    title: string;
-    column_type: string;
-  };
-}
-
-interface Item {
-  id: string;
-  board_id: string;
-  group_id?: string;
-  name: string;
-  position: number;
-  is_archived: boolean;
-  created_at: string;
-  updated_at: string;
-  column_values?: ColumnValue[];
-  group?: {
-    id: string;
-    name: string;
-    color?: string;
-  };
-}
-
-interface ItemsResponse {
-  items: Item[];
-  pagination: {
-    total: number;
-    limit: number;
-    offset: number;
-    totalPages: number;
-  };
-}
-
-interface ItemsFilters {
-  board_id: string;
-  group_id?: string;
-  limit?: number;
-  offset?: number;
-}
+import type { Item, ColumnValue, ItemsResponse, ItemsFilters } from '@/types/boards';
 
 /**
  * Fetch items from API
@@ -165,8 +119,30 @@ export function useUpdateItem() {
 }
 
 /**
- * Hook to update column values
+ * Hook to delete items
  */
+export function useDeleteItems() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (itemIds: string[]) => {
+      const response = await fetch('/api/items/bulk', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ itemIds }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete items');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['items', 'list'] });
+    },
+  });
+}
 export function useUpdateColumnValues() {
   const queryClient = useQueryClient();
 
@@ -195,9 +171,52 @@ export function useUpdateColumnValues() {
       
       return response.json();
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['items', 'detail', variables.itemId] });
+    onMutate: async ({ itemId, values }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['items', 'list'] });
+      await queryClient.cancelQueries({ queryKey: ['items', 'detail', itemId] });
+
+      // Snapshot the previous value
+      const previousItems = queryClient.getQueryData(['items', 'list']);
+      const previousItem = queryClient.getQueryData(['items', 'detail', itemId]);
+
+      // Optimistically update to the new value
+      queryClient.setQueryData(['items', 'list'], (old: any) => {
+        if (!old?.items) return old;
+        return {
+          ...old,
+          items: old.items.map((item: any) => {
+            if (item.id !== itemId) return item;
+            // Update the specific column value in the item
+            const newColumnValues = [...(item.column_values || [])];
+            values.forEach(update => {
+              const existingIndex = newColumnValues.findIndex(cv => cv.column_id === update.column_id);
+              if (existingIndex >= 0) {
+                newColumnValues[existingIndex] = { ...newColumnValues[existingIndex], ...update };
+              } else {
+                newColumnValues.push({ id: 'optimistic-' + update.column_id, ...update });
+              }
+            });
+            return { ...item, column_values: newColumnValues };
+          }),
+        };
+      });
+
+      return { previousItems, previousItem };
+    },
+    onError: (err, variables, context) => {
+      // Rollback to the previous value
+      if (context?.previousItems) {
+        queryClient.setQueryData(['items', 'list'], context.previousItems);
+      }
+      if (context?.previousItem) {
+        queryClient.setQueryData(['items', 'detail', variables.itemId], context.previousItem);
+      }
+    },
+    onSettled: (_, __, variables) => {
+      // Invalidate and refetch
       queryClient.invalidateQueries({ queryKey: ['items', 'list'] });
+      queryClient.invalidateQueries({ queryKey: ['items', 'detail', variables.itemId] });
     },
   });
 }

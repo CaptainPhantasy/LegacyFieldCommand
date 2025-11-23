@@ -3,16 +3,16 @@ import { getAssignedJobs } from '@/app/actions/gates';
 import FieldDashboard from '@/components/dashboard/FieldDashboard';
 import { createClient } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation';
-import type { JobGate, GateStageName } from '@/types/gates';
+import type { JobGate, GateStageName, JobWithGates } from '@/types/gates';
 
 // Helper to map the raw DB response to the UI's expected shape
-function transformJob(job: any) {
+function transformJob(job: JobWithGates): JobWithGates & { nextGate?: JobGate; activeException?: boolean } {
   const GATES_ORDER: GateStageName[] = ['Arrival', 'Intake', 'Photos', 'Moisture/Equipment', 'Scope', 'Sign-offs', 'Departure'];
   
   const gates = job.gates || [];
   const currentGate = gates.find((g: JobGate) => g.status === 'in_progress') 
     || gates.find((g: JobGate) => g.status === 'pending') // Fallback to first pending
-    || null;
+    || undefined;
 
   return {
     ...job,

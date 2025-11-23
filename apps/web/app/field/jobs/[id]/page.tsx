@@ -2,11 +2,12 @@ import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { JobBoardLink } from '@/components/integration/JobBoardLink'
 
 interface PageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default async function JobDetailPage({ params }: PageProps) {
@@ -63,11 +64,14 @@ export default async function JobDetailPage({ params }: PageProps) {
           <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
             Status: {job.status}
           </p>
+          <div className="mt-3">
+            <JobBoardLink jobId={job.id} />
+          </div>
         </div>
       </header>
 
       <main>
-        <div className="app-shell-inner max-w-3xl">
+        <div className="app-shell-inner">
           <h2 className="mb-6 text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
             Visit Workflow
           </h2>

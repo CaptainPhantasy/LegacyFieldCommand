@@ -6,36 +6,10 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/api/react-query';
+import type { Board, BoardsResponse, BoardsFilters, BoardDetailResponse, Group, Column, Item, View } from '@/types/boards';
 
-interface Board {
-  id: string;
-  name: string;
-  description?: string;
-  board_type: string;
-  account_id?: string;
-  icon?: string;
-  color?: string;
-  created_at: string;
-  updated_at: string;
-  [key: string]: unknown;
-}
-
-interface BoardsResponse {
-  boards: Board[];
-  pagination: {
-    total: number;
-    limit: number;
-    offset: number;
-    totalPages: number;
-  };
-}
-
-interface BoardsFilters {
-  account_id?: string;
-  board_type?: string;
-  limit?: number;
-  offset?: number;
-}
+// Re-export Board for backward compatibility
+export type { Board };
 
 /**
  * Fetch boards from API
@@ -60,13 +34,7 @@ async function fetchBoards(filters?: BoardsFilters): Promise<BoardsResponse> {
 /**
  * Fetch single board
  */
-async function fetchBoard(boardId: string): Promise<{
-  board: Board;
-  groups: unknown[];
-  columns: unknown[];
-  items: unknown[];
-  views: unknown[];
-}> {
+async function fetchBoard(boardId: string): Promise<BoardDetailResponse> {
   const response = await fetch(`/api/boards/${boardId}`);
   if (!response.ok) {
     throw new Error('Failed to fetch board');

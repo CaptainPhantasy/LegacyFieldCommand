@@ -24,6 +24,21 @@ const ERROR_MESSAGES: Record<string, ErrorMessage> = {
     errorCode: 'FORBIDDEN',
     statusCode: 403,
   },
+  FORBIDDEN_ADMIN_REQUIRED: {
+    userMessage: 'This action requires administrator privileges. Please contact your administrator if you need access.',
+    errorCode: 'FORBIDDEN_ADMIN_REQUIRED',
+    statusCode: 403,
+  },
+  FORBIDDEN_ESTIMATOR_REQUIRED: {
+    userMessage: 'This action requires estimator privileges. Please contact your administrator to upgrade your account.',
+    errorCode: 'FORBIDDEN_ESTIMATOR_REQUIRED',
+    statusCode: 403,
+  },
+  FORBIDDEN_OWNER_REQUIRED: {
+    userMessage: 'This action requires owner privileges. Only system owners can perform this action.',
+    errorCode: 'FORBIDDEN_OWNER_REQUIRED',
+    statusCode: 403,
+  },
   PROFILE_NOT_FOUND: {
     userMessage: 'Your user profile could not be found. Please contact support.',
     errorCode: 'PROFILE_NOT_FOUND',

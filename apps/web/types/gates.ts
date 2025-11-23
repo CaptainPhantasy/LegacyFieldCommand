@@ -35,11 +35,44 @@ export interface JobGate {
 export interface Job {
   id: string
   title: string
+  account_id: string | null
   address_line_1: string | null
+  city: string | null
+  state: string | null
+  zip_code: string | null
   lead_tech_id: string | null
+  estimator_id: string | null
   status: JobStatus
   created_at: string
   updated_at: string
+  [key: string]: unknown // For API flexibility
+}
+
+// Type variants for different use cases
+export interface JobWithProfile extends Job {
+  profiles?: {
+    id: string
+    email: string
+    full_name: string
+    role: string
+  } | null
+}
+
+export interface JobWithGates extends Job {
+  gates?: JobGate[]
+}
+
+export interface JobFull extends JobWithProfile {
+  gates?: JobGate[]
+}
+
+// Type guards
+export function isJobWithGates(job: Job): job is JobWithGates {
+  return 'gates' in job && Array.isArray((job as JobWithGates).gates)
+}
+
+export function isJobWithProfile(job: Job): job is JobWithProfile {
+  return 'profiles' in job && (job as JobWithProfile).profiles !== undefined
 }
 
 export interface JobPhoto {

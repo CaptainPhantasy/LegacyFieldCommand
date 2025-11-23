@@ -32,7 +32,7 @@ const createEquipmentLogSchema = z.object({
   end_date: z.string().date().optional().nullable(),
   is_active: z.boolean().optional(),
   notes: z.string().max(1000).optional().nullable(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 const listEquipmentQuerySchema = z.object({

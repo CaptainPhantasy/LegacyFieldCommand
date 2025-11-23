@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin, errorResponse, successResponse, parsePagination, parseSort, ApiError } from '@/lib/api/middleware'
+import { onJobCreated } from '@/lib/integration/automation-rules'
 
 /**
  * GET /api/admin/jobs
@@ -90,6 +91,14 @@ export async function POST(request: NextRequest) {
       throw new ApiError('Title and address_line_1 are required', 400)
     }
 
+    // Get user's account_id for job creation
+    const { data: { user } } = await supabase.auth.getUser()
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('account_id')
+      .eq('id', user?.id)
+      .single()
+
     // Create job
     const { data: job, error: jobError } = await supabase
       .from('jobs')
@@ -98,6 +107,7 @@ export async function POST(request: NextRequest) {
         address_line_1: body.address_line_1,
         lead_tech_id: body.lead_tech_id || null,
         status: body.status || 'lead',
+        account_id: profile?.account_id || body.account_id || null,
       })
       .select()
       .single()
@@ -122,6 +132,13 @@ export async function POST(request: NextRequest) {
     if (gatesError) {
       // Log error but don't fail the request - gates can be created later
       console.error('Error creating default gates:', gatesError)
+    }
+
+    // Sync job to board (async, don't wait)
+    if (job.account_id) {
+      onJobCreated(job.id, job.account_id, supabase, user?.id || '').catch(
+        (err) => console.error('Error syncing job to board:', err)
+      )
     }
 
     return successResponse({ job }, 201)

@@ -46,8 +46,8 @@ export default async function JobReportsPage({
     .order('created_at', { ascending: false });
 
   return (
-    <div className="min-h-screen p-6" style={{ backgroundColor: 'var(--background)' }}>
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="app-shell">
+      <main className="app-shell-inner space-y-6 py-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -113,7 +113,7 @@ export default async function JobReportsPage({
             </div>
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }

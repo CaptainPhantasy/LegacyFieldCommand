@@ -8,6 +8,8 @@
 import { useState } from 'react';
 import { useBoard } from '@/hooks/useBoards';
 import { TableView } from '@/components/views/TableView';
+import { KanbanView } from '@/components/views/KanbanView';
+import type { View } from '@/types/boards';
 
 interface BoardViewProps {
   boardId: string;
@@ -41,12 +43,12 @@ export function BoardView({ boardId }: BoardViewProps) {
     );
   }
 
-  const { board, groups, columns, items, views } = data;
+  const { board, groups, columns, views } = data;
 
   // Find default view or first view
-  const defaultView = views?.find((v: { is_default: boolean }) => v.is_default) || views?.[0];
+  const defaultView = views?.find((v: View) => v.is_default) || views?.[0];
   const currentView = selectedViewId
-    ? views?.find((v: { id: string }) => v.id === selectedViewId)
+    ? views?.find((v: View) => v.id === selectedViewId)
     : defaultView;
 
   // Render view based on type
@@ -59,20 +61,16 @@ export function BoardView({ boardId }: BoardViewProps) {
       );
     }
 
-    switch (currentView.view_type) {
+    const view = currentView;
+    switch (view.view_type) {
       case 'table':
         return <TableView boardId={boardId} columns={columns || []} groups={groups || []} />;
       case 'kanban':
-        // TODO: Implement Kanban view
-        return (
-          <div className="p-8 text-center" style={{ color: 'var(--text-secondary)' }}>
-            Kanban view coming soon...
-          </div>
-        );
+        return <KanbanView boardId={boardId} groups={groups || []} columns={columns || []} />;
       default:
         return (
           <div className="p-8 text-center" style={{ color: 'var(--text-secondary)' }}>
-            View type "{currentView.view_type}" not yet implemented.
+            View type &quot;{currentView.view_type}&quot; not yet implemented.
           </div>
         );
     }
@@ -98,9 +96,10 @@ export function BoardView({ boardId }: BoardViewProps) {
         {/* View Switcher */}
         {views && views.length > 0 && (
           <div className="flex gap-2">
-            {views.map((view: { id: string; name: string; view_type: string; is_default: boolean }) => (
+            {views.map((view: View) => (
               <button
                 key={view.id}
+                type="button"
                 onClick={() => setSelectedViewId(view.id)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   (selectedViewId === view.id || (!selectedViewId && view.is_default))

@@ -57,7 +57,7 @@ export const updateUserSchema = z.object({
 export const fileUploadSchema = z.object({
   jobId: uuidSchema,
   gateId: uuidSchema.optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 /**
@@ -81,7 +81,7 @@ export const policyUploadSchema = z.object({
  * Gate Completion Schema
  */
 export const completeGateSchema = z.object({
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
   exception_reason: z.string().min(1).max(1000).optional(),
 });
 

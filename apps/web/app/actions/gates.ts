@@ -3,7 +3,7 @@
 import { createClient } from '@/utils/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import type { Job, JobGate, Reading, MoistureData } from '@/types/gates';
+import type { Job, JobGate, Reading, MoistureData, JobWithGates, GateMetadata } from '@/types/gates';
 
 export async function getAssignedJobs() {
   const supabase = await createClient();
@@ -27,9 +27,9 @@ export async function getAssignedJobs() {
   }
 
   // Sort gates for each job to ensure we can determine progress
-  const jobsWithGates = jobs.map((job: any) => ({
+  const jobsWithGates: JobWithGates[] = jobs.map((job: Job & { gates?: JobGate[] }) => ({
     ...job,
-    gates: job.gates.sort((a: JobGate, b: JobGate) => {
+    gates: (job.gates || []).sort((a: JobGate, b: JobGate) => {
       // Simple sort or use a predefined order map if needed
       // For now, rely on creation or name if consistent, but ideally add an 'order' column
       return 0; 
@@ -59,7 +59,7 @@ export async function getJobDetails(jobId: string) {
   return job;
 }
 
-export async function saveGateData(gateId: string, data: any) {
+export async function saveGateData(gateId: string, data: GateMetadata) {
   const supabase = await createClient();
   
   const { error } = await supabase
