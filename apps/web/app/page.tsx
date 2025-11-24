@@ -40,78 +40,82 @@ export default async function Dashboard() {
               Monitor jobs, assignments, and field activity.
             </p>
           </div>
-          <div className="flex items-center gap-4">
-            <Link
-              href="/boards"
-              className="text-sm font-medium transition-colors hover:opacity-80"
-              style={{ color: 'var(--accent)' }}
-            >
-              Boards
-            </Link>
-            <Link
-              href="/admin/users"
-              className="text-sm font-medium transition-colors hover:opacity-80"
-              style={{ color: 'var(--accent)' }}
-            >
-              Users
-            </Link>
-            <Link
-              href="/admin/policies"
-              className="text-sm font-medium transition-colors hover:opacity-80"
-              style={{ color: 'var(--accent)' }}
-            >
-              Policies
-            </Link>
-            <Link
-              href="/alerts"
-              className="text-sm font-medium transition-colors hover:opacity-80"
-              style={{ color: 'var(--accent)' }}
-            >
-              Alerts
-            </Link>
-            <Link
-              href="/monitoring"
-              className="text-sm font-medium transition-colors hover:opacity-80"
-              style={{ color: 'var(--accent)' }}
-            >
-              Monitoring
-            </Link>
-            <Link
-              href="/estimates"
-              className="text-sm font-medium transition-colors hover:opacity-80"
-              style={{ color: 'var(--accent)' }}
-            >
-              Estimates
-            </Link>
-            <Link
-              href="/communications"
-              className="text-sm font-medium transition-colors hover:opacity-80"
-              style={{ color: 'var(--accent)' }}
-            >
-              Communications
-            </Link>
-            <Link
-              href="/templates"
-              className="text-sm font-medium transition-colors hover:opacity-80"
-              style={{ color: 'var(--accent)' }}
-            >
-              Templates
-            </Link>
-            <Link
-              href="/measurements"
-              className="text-sm font-medium transition-colors hover:opacity-80"
-              style={{ color: 'var(--accent)' }}
-            >
-              Measurements
-            </Link>
-            <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{user.email}</span>
-            <Link
-              href="/auth/signout"
-              className="text-sm font-medium transition-colors hover:opacity-80"
-              style={{ color: 'var(--error)' }}
-            >
-              Sign Out
-            </Link>
+          <div className="flex items-center gap-2 flex-wrap">
+            <nav className="flex items-center gap-2 flex-wrap" aria-label="Main navigation">
+              <Link
+                href="/boards"
+                className="text-sm font-medium transition-colors hover:opacity-80 px-2 py-1"
+                style={{ color: 'var(--accent)' }}
+              >
+                Boards
+              </Link>
+              <Link
+                href="/admin/users"
+                className="text-sm font-medium transition-colors hover:opacity-80 px-2 py-1"
+                style={{ color: 'var(--accent)' }}
+              >
+                Users
+              </Link>
+              <Link
+                href="/admin/policies"
+                className="text-sm font-medium transition-colors hover:opacity-80 px-2 py-1"
+                style={{ color: 'var(--accent)' }}
+              >
+                Policies
+              </Link>
+              <Link
+                href="/alerts"
+                className="text-sm font-medium transition-colors hover:opacity-80 px-2 py-1"
+                style={{ color: 'var(--accent)' }}
+              >
+                Alerts
+              </Link>
+              <Link
+                href="/monitoring"
+                className="text-sm font-medium transition-colors hover:opacity-80 px-2 py-1"
+                style={{ color: 'var(--accent)' }}
+              >
+                Monitoring
+              </Link>
+              <Link
+                href="/estimates"
+                className="text-sm font-medium transition-colors hover:opacity-80 px-2 py-1"
+                style={{ color: 'var(--accent)' }}
+              >
+                Estimates
+              </Link>
+              <Link
+                href="/communications"
+                className="text-sm font-medium transition-colors hover:opacity-80 px-2 py-1"
+                style={{ color: 'var(--accent)' }}
+              >
+                Communications
+              </Link>
+              <Link
+                href="/templates"
+                className="text-sm font-medium transition-colors hover:opacity-80 px-2 py-1"
+                style={{ color: 'var(--accent)' }}
+              >
+                Templates
+              </Link>
+              <Link
+                href="/measurements"
+                className="text-sm font-medium transition-colors hover:opacity-80 px-2 py-1"
+                style={{ color: 'var(--accent)' }}
+              >
+                Measurements
+              </Link>
+            </nav>
+            <div className="flex items-center gap-3 ml-4 pl-4 border-l" style={{ borderColor: 'var(--glass-border)' }}>
+              <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{user.email}</span>
+              <Link
+                href="/auth/signout"
+                className="text-sm font-medium transition-colors hover:opacity-80"
+                style={{ color: 'var(--error)' }}
+              >
+                Sign Out
+              </Link>
+            </div>
           </div>
         </div>
       </header>
@@ -292,12 +296,13 @@ export default async function Dashboard() {
               )}
               {jobs?.map((job) => (
                 <li key={job.id}>
-                  <div className="transition-colors duration-150 hover:bg-[var(--hover-bg-subtle)] rounded-xl">
-                    <div className="px-4 py-4 sm:px-6">
-                      <div className="flex items-center justify-between gap-4">
-                        <p className="truncate text-sm font-medium" style={{ color: 'var(--accent)' }}>
-                          {job.title}
-                        </p>
+                  <Link href={`/field/jobs/${job.id}`}>
+                    <div className="transition-colors duration-150 hover:bg-[var(--hover-bg-subtle)] rounded-xl cursor-pointer">
+                      <div className="px-4 py-4 sm:px-6">
+                        <div className="flex items-center justify-between gap-4">
+                          <p className="truncate text-sm font-medium" style={{ color: 'var(--accent)' }}>
+                            {job.title}
+                          </p>
                         <div className="flex flex-shrink-0">
                           <p
                             className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold"
@@ -322,6 +327,7 @@ export default async function Dashboard() {
                       </div>
                     </div>
                   </div>
+                  </Link>
                 </li>
               ))}
             </ul>

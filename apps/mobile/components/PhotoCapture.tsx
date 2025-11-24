@@ -1,139 +1,151 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+'use client';
+
+import { useState, useRef } from 'react';
+import styles from './PhotoCapture.module.css';
 
 interface PhotoCaptureProps {
-  onPhotoTaken: (uri: string) => void;
+  onPhotoTaken: (file: File) => void;
   label?: string;
   required?: boolean;
 }
 
-export default function PhotoCapture({ onPhotoTaken, label = 'Take Photo', required = false }: PhotoCaptureProps) {
-  const [photoUri, setPhotoUri] = useState<string | null>(null);
+export default function PhotoCapture({
+  onPhotoTaken,
+  label = 'Take Photo',
+  required = false,
+}: PhotoCaptureProps) {
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const [showCamera, setShowCamera] = useState(false);
 
-  const handleTakePhoto = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission needed', 'Camera permission is required to take photos.');
-      return;
-    }
-
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 0.8,
-    });
-
-    if (!result.canceled && result.assets[0]) {
-      setPhotoUri(result.assets[0].uri);
-      onPhotoTaken(result.assets[0].uri);
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setPhotoUrl(url);
+      setPhotoFile(file);
+      onPhotoTaken(file);
     }
   };
 
-  const handleSelectFromLibrary = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission needed', 'Photo library permission is required.');
-      return;
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' }, // Use back camera on mobile
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        setShowCamera(true);
+      }
+    } catch (error) {
+      alert('Camera permission is required to take photos.');
+      console.error('Camera error:', error);
     }
+  };
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 0.8,
-    });
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    setShowCamera(false);
+  };
 
-    if (!result.canceled && result.assets[0]) {
-      setPhotoUri(result.assets[0].uri);
-      onPhotoTaken(result.assets[0].uri);
+  const capturePhoto = () => {
+    if (videoRef.current) {
+      const canvas = document.createElement('canvas');
+      canvas.width = videoRef.current.videoWidth;
+      canvas.height = videoRef.current.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(videoRef.current, 0, 0);
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const file = new File([blob], `photo-${Date.now()}.jpg`, {
+              type: 'image/jpeg',
+            });
+            const url = URL.createObjectURL(file);
+            setPhotoUrl(url);
+            setPhotoFile(file);
+            onPhotoTaken(file);
+            stopCamera();
+          }
+        }, 'image/jpeg', 0.8);
+      }
+    }
+  };
+
+  const handleRetake = () => {
+    setPhotoUrl(null);
+    setPhotoFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
   return (
-    <View style={styles.container}>
-      {photoUri ? (
-        <View style={styles.previewContainer}>
-          <Image source={{ uri: photoUri }} style={styles.previewImage} />
-          <View style={styles.previewActions}>
-            <TouchableOpacity style={styles.actionButton} onPress={handleTakePhoto}>
-              <Text style={styles.actionButtonText}>Retake</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton} onPress={handleSelectFromLibrary}>
-              <Text style={styles.actionButtonText}>Choose Different</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+    <div className={styles.container}>
+      {photoUrl ? (
+        <div className={styles.previewContainer}>
+          <img src={photoUrl} alt="Preview" className={styles.previewImage} />
+          <div className={styles.previewActions}>
+            <button className={styles.actionButton} onClick={handleRetake}>
+              Retake
+            </button>
+            <button
+              className={styles.actionButton}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              Choose Different
+            </button>
+          </div>
+        </div>
+      ) : showCamera ? (
+        <div className={styles.cameraContainer}>
+          <video ref={videoRef} autoPlay playsInline className={styles.video} />
+          <div className={styles.cameraActions}>
+            <button
+              className={styles.captureButton}
+              onClick={capturePhoto}
+            >
+              📷 Capture
+            </button>
+            <button className={styles.cancelButton} onClick={stopCamera}>
+              Cancel
+            </button>
+          </div>
+        </div>
       ) : (
-        <View style={styles.captureContainer}>
-          <TouchableOpacity style={styles.captureButton} onPress={handleTakePhoto}>
-            <Text style={styles.captureButtonText}>📷 {label}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.libraryButton} onPress={handleSelectFromLibrary}>
-            <Text style={styles.libraryButtonText}>Choose from Library</Text>
-          </TouchableOpacity>
+        <div className={styles.captureContainer}>
+          <button
+            className={styles.captureButton}
+            onClick={startCamera}
+          >
+            📷 {label}
+          </button>
+          <button
+            className={styles.libraryButton}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            Choose from Library
+          </button>
           {required && (
-            <Text style={styles.requiredText}>* This photo is required</Text>
+            <p className={styles.requiredText}>* This photo is required</p>
           )}
-        </View>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handleFileSelect}
+            style={{ display: 'none' }}
+          />
+        </div>
       )}
-    </View>
+    </div>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    marginVertical: 12,
-  },
-  captureContainer: {
-    alignItems: 'center',
-  },
-  captureButton: {
-    backgroundColor: '#3b82f6',
-    padding: 16,
-    borderRadius: 8,
-    width: '100%',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  captureButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  libraryButton: {
-    padding: 12,
-  },
-  libraryButtonText: {
-    color: '#3b82f6',
-    fontSize: 14,
-  },
-  requiredText: {
-    color: '#ef4444',
-    fontSize: 12,
-    marginTop: 8,
-  },
-  previewContainer: {
-    alignItems: 'center',
-  },
-  previewImage: {
-    width: '100%',
-    height: 300,
-    borderRadius: 8,
-    marginBottom: 12,
-  },
-  previewActions: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  actionButton: {
-    padding: 12,
-    backgroundColor: '#f3f4f6',
-    borderRadius: 6,
-  },
-  actionButtonText: {
-    color: '#3b82f6',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-});
-

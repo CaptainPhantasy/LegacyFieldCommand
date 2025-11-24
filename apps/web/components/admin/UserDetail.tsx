@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useUser, useUpdateUser, type UserRole } from '@/hooks/useAdmin';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -36,14 +36,16 @@ export function UserDetail({ userId }: UserDetailProps) {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Initialize form data when user loads
-  if (data && !isEditing && formData.email === '') {
-    setFormData({
-      email: data.email,
-      full_name: data.full_name || '',
-      role: data.role,
-    });
-  }
+  // Initialize form data when user loads - use useEffect to avoid hydration issues
+  useEffect(() => {
+    if (data && !isEditing) {
+      setFormData({
+        email: data.email,
+        full_name: data.full_name || '',
+        role: data.role,
+      });
+    }
+  }, [data, isEditing]);
 
   const handleSave = async () => {
     setSaveError(null);

@@ -44,7 +44,7 @@ async function fetchMissingGates(): Promise<any[]> {
   const response = await fetch('/api/monitoring/gates/missing');
   if (!response.ok) throw new Error('Failed to fetch missing gates');
   const data = await response.json();
-  return data.data.missingGates || [];
+  return data.data.gatesWithMissingArtifacts || [];
 }
 
 async function fetchStaleJobs(): Promise<any[]> {

@@ -39,6 +39,13 @@ async function fetchEmailTemplates(): Promise<EmailTemplate[]> {
   return data.data.templates || [];
 }
 
+async function fetchEmailTemplate(templateId: string): Promise<EmailTemplate> {
+  const response = await fetch(`/api/communications/email/templates/${templateId}`);
+  if (!response.ok) throw new Error('Failed to fetch email template');
+  const data = await response.json();
+  return data.data.template;
+}
+
 async function fetchCommunicationHistory(jobId: string): Promise<Communication[]> {
   const response = await fetch(`/api/communications/history/${jobId}`);
   if (!response.ok) throw new Error('Failed to fetch communication history');
@@ -73,6 +80,15 @@ export function useEmailTemplates() {
     queryKey: ['communications', 'email', 'templates'],
     queryFn: fetchEmailTemplates,
     staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+export function useEmailTemplate(templateId: string) {
+  return useQuery({
+    queryKey: ['communications', 'email', 'templates', templateId],
+    queryFn: () => fetchEmailTemplate(templateId),
+    enabled: !!templateId,
+    staleTime: 5 * 60 * 1000,
   });
 }
 

@@ -5,23 +5,28 @@
 'use client';
 
 import { useState } from 'react';
-import { usePolicy, useParsePolicy, useLinkPolicyToJob } from '@/hooks/usePolicies';
+import { usePolicy, useParsePolicy, useLinkPolicyToJob, useUploadPolicy } from '@/hooks/usePolicies';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface PolicyDetailProps {
   policyId: string;
 }
 
 export function PolicyDetail({ policyId }: PolicyDetailProps) {
+  const router = useRouter();
   const { data, isLoading, error } = usePolicy(policyId);
   const parsePolicy = useParsePolicy();
   const linkPolicy = useLinkPolicyToJob();
+  const uploadPolicy = useUploadPolicy();
   const [linkJobId, setLinkJobId] = useState('');
   const [actionError, setActionError] = useState<string | null>(null);
   const [isParsing, setIsParsing] = useState(false);
   const [isLinking, setIsLinking] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
 
   const handleParse = async () => {
     setActionError(null);
@@ -49,6 +54,46 @@ export function PolicyDetail({ policyId }: PolicyDetailProps) {
       setActionError(err.message || 'Failed to link policy');
     } finally {
       setIsLinking(false);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.type !== 'application/pdf' && !file.name.endsWith('.pdf')) {
+        setActionError('Only PDF files are allowed');
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        setActionError('File size must be less than 10MB');
+        return;
+      }
+      setUploadFile(file);
+      setActionError(null);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!uploadFile) {
+      setActionError('Please select a PDF file');
+      return;
+    }
+    setActionError(null);
+    setIsUploading(true);
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', uploadFile);
+      if (data?.policy_number) uploadFormData.append('policyNumber', data.policy_number);
+      if (data?.carrier_name) uploadFormData.append('carrierName', data.carrier_name);
+      uploadFormData.append('jobId', linkJobId || '');
+
+      await uploadPolicy.mutateAsync(uploadFormData);
+      router.refresh(); // Refresh to show new policy
+      setUploadFile(null);
+    } catch (err: any) {
+      setActionError(err.message || 'Failed to upload PDF');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -138,14 +183,46 @@ export function PolicyDetail({ policyId }: PolicyDetailProps) {
               Created
             </label>
             <p className="text-sm" style={{ color: 'var(--text-primary)' }}>
-              {new Date(data.created_at).toLocaleString()}
+              {typeof window !== 'undefined' ? new Date(data.created_at).toLocaleString() : data.created_at}
             </p>
           </div>
         </div>
 
+        {/* PDF Upload Section - Show if no PDF exists */}
+        {!data.pdf_url && !data.pdf_storage_path && (
+          <div className="pt-4 border-t space-y-4" style={{ borderColor: 'var(--glass-border)' }}>
+            <div>
+              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
+                Upload Policy PDF
+              </label>
+              <div className="flex gap-2 items-end">
+                <div className="flex-1">
+                  <Input
+                    type="file"
+                    accept=".pdf,application/pdf"
+                    onChange={handleFileChange}
+                  />
+                  <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>
+                    Maximum file size: 10MB
+                  </p>
+                </div>
+                <Button 
+                  onClick={handleUpload} 
+                  disabled={isUploading || !uploadFile}
+                >
+                  {isUploading ? 'Uploading...' : 'Upload PDF'}
+                </Button>
+              </div>
+              <p className="text-xs mt-2" style={{ color: 'var(--text-tertiary)' }}>
+                Or <Link href="/admin/policies/upload" className="underline" style={{ color: 'var(--accent)' }}>upload a new policy</Link>
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Actions */}
         <div className="pt-4 border-t space-y-4" style={{ borderColor: 'var(--glass-border)' }}>
-          {data.status !== 'parsed' && (
+          {data.status !== 'parsed' && data.pdf_url && (
             <div>
               <Button onClick={handleParse} disabled={isParsing}>
                 {isParsing ? 'Parsing...' : 'Parse Policy'}
@@ -205,7 +282,7 @@ export function PolicyDetail({ policyId }: PolicyDetailProps) {
                       {key.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
                     </div>
                     <div className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                      ${typeof value === 'number' ? value.toLocaleString() : value}
+                      ${typeof value === 'number' && typeof window !== 'undefined' ? value.toLocaleString() : value}
                     </div>
                   </div>
                 ))}
@@ -219,7 +296,7 @@ export function PolicyDetail({ policyId }: PolicyDetailProps) {
                 Deductible
               </h3>
               <p className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
-                ${data.deductible.toLocaleString()}
+                ${typeof window !== 'undefined' ? data.deductible.toLocaleString() : data.deductible}
               </p>
             </div>
           )}

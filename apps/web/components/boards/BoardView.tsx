@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useBoard } from '@/hooks/useBoards';
 import { TableView } from '@/components/views/TableView';
 import { KanbanView } from '@/components/views/KanbanView';
@@ -18,6 +18,11 @@ interface BoardViewProps {
 export function BoardView({ boardId }: BoardViewProps) {
   const { data, isLoading, error } = useBoard(boardId);
   const [selectedViewId, setSelectedViewId] = useState<string | null>(null);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   if (isLoading) {
     return (
@@ -45,11 +50,29 @@ export function BoardView({ boardId }: BoardViewProps) {
 
   const { board, groups, columns, views } = data;
 
-  // Find default view or first view
+  // Find default view or first view - initialize selectedViewId on client only
+  useEffect(() => {
+    if (!selectedViewId && views && views.length > 0) {
+      const defaultView = views.find((v: View) => v.is_default) || views[0];
+      if (defaultView) {
+        setSelectedViewId(defaultView.id);
+      }
+    }
+  }, [views, selectedViewId]);
+
   const defaultView = views?.find((v: View) => v.is_default) || views?.[0];
   const currentView = selectedViewId
     ? views?.find((v: View) => v.id === selectedViewId)
     : defaultView;
+
+  // Prevent hydration mismatch by not rendering until client-side
+  if (!isClient) {
+    return (
+      <div className="p-8 text-center" style={{ color: 'var(--text-secondary)' }}>
+        Loading board...
+      </div>
+    );
+  }
 
   // Render view based on type
   const renderView = () => {
