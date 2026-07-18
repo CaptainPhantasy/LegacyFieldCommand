@@ -22,9 +22,9 @@ All hardcoded Supabase service role keys and JWT tokens have been removed from s
 
 ### Before
 ```javascript
-const serviceRoleKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 // or
-const serviceRoleKey = 'sbp_1c3492ae02ff8a02b1e46b99dd593b9afcc99d6a';
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 ```
 
 ### After

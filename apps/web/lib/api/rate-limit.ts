@@ -5,41 +5,39 @@
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 
-// Initialize Redis client
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL || '',
-  token: process.env.UPSTASH_REDIS_REST_TOKEN || '',
-});
+type RateLimitType = 'api' | 'upload' | 'auth';
 
-/**
- * General API rate limit: 100 requests per minute
- */
-export const apiRateLimit = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(100, '1 m'),
-  analytics: true,
-  prefix: '@upstash/ratelimit/api',
-});
+let limiters: Record<RateLimitType, Ratelimit> | null = null;
 
-/**
- * Upload rate limit: 10 requests per minute
- */
-export const uploadRateLimit = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(10, '1 m'),
-  analytics: true,
-  prefix: '@upstash/ratelimit/upload',
-});
+function getLimiters(): Record<RateLimitType, Ratelimit> | null {
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return null;
+  if (limiters) return limiters;
 
-/**
- * Authentication rate limit: 5 requests per minute
- */
-export const authRateLimit = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(5, '1 m'),
-  analytics: true,
-  prefix: '@upstash/ratelimit/auth',
-});
+  const redis = new Redis({ url, token });
+  limiters = {
+    api: new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(100, '1 m'),
+      analytics: true,
+      prefix: '@upstash/ratelimit/api',
+    }),
+    upload: new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(10, '1 m'),
+      analytics: true,
+      prefix: '@upstash/ratelimit/upload',
+    }),
+    auth: new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(5, '1 m'),
+      analytics: true,
+      prefix: '@upstash/ratelimit/auth',
+    }),
+  };
+  return limiters;
+}
 
 /**
  * Rate limit result
@@ -56,10 +54,10 @@ export interface RateLimitResult {
  */
 export async function checkRateLimit(
   identifier: string,
-  type: 'api' | 'upload' | 'auth' = 'api'
+  type: RateLimitType = 'api'
 ): Promise<RateLimitResult> {
-  // If Upstash not configured, allow all requests (for development)
-  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+  const configuredLimiters = getLimiters();
+  if (!configuredLimiters) {
     return {
       success: true,
       limit: 100,
@@ -68,8 +66,7 @@ export async function checkRateLimit(
     };
   }
 
-  const limiter = type === 'upload' ? uploadRateLimit : type === 'auth' ? authRateLimit : apiRateLimit;
-  const result = await limiter.limit(identifier);
+  const result = await configuredLimiters[type].limit(identifier);
 
   return {
     success: result.success,
@@ -78,4 +75,3 @@ export async function checkRateLimit(
     reset: result.reset,
   };
 }
-

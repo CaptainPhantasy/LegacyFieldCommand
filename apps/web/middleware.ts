@@ -3,6 +3,26 @@ import { updateSession } from './utils/supabase/middleware'
 import { checkRateLimit } from './lib/api/rate-limit'
 
 export async function middleware(request: NextRequest) {
+  const supabaseConfigured = Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  )
+
+  if (!supabaseConfigured) {
+    if (request.nextUrl.pathname.startsWith('/api/')) {
+      return NextResponse.json(
+        { error: true, code: 'SERVICE_NOT_CONFIGURED', message: 'Supabase is not configured.' },
+        { status: 503 }
+      )
+    }
+    if (request.nextUrl.pathname !== '/login') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      url.searchParams.set('configuration', 'required')
+      return NextResponse.redirect(url)
+    }
+    return NextResponse.next()
+  }
+
   // Update session first
   const response = await updateSession(request)
 
@@ -79,4 +99,3 @@ export const config = {
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
-
