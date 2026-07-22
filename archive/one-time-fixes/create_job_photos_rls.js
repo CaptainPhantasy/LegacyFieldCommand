@@ -1,8 +1,13 @@
+import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 import fetch from 'node-fetch';
 
-const supabaseUrl = 'https://anwltpsdedfvkbscyylk.supabase.co';
-const serviceRoleKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFud2x0cHNkZWRmdmtic2N5eWxrIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MzU5MTgwMiwiZXhwIjoyMDc5MTY3ODAyfQ.H7xF9yonUAj2Gkj0y8fPSAicFkU--efKXxpOAAO8c9c';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !serviceRoleKey) {
+  throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required');
+}
 
 async function createRLSPolicies() {
   const policies = [
@@ -95,4 +100,3 @@ async function runSQL(sql) {
 // Actually, let's just use the Management API or tell user to run SQL
 console.log('Run this SQL in Supabase SQL Editor:');
 console.log('\n' + policies.map(p => p.sql).join('\n\n'));
-

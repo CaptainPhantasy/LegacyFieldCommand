@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "publish": true,
+  "baseBranch": "main",
+  "remote": "origin",
+  "allowLocalRemote": false,
+  "include": [
+    ".proofline.json",
+    ".env.example",
+    ".gitignore",
+    "package.json",
+    "package-lock.json",
+    "apps/web/package.json",
+    "apps/web/package-lock.json",
+    "apps/web/next.config.ts",
+    "apps/web/middleware.ts",
+    "apps/web/lib/api/rate-limit.ts",
+    "apps/web/components/views/KanbanView.tsx",
+    "archive/one-time-fixes/create_job_photos_rls.js",
+    "archive/one-time-fixes/fix_job_access.js",
+    "archive/one-time-fixes/fix_job_gates.js",
+    "archive/one-time-fixes/remove_duplicate_gate.js",
+    "archive/scripts/verify_job.js",
+    "scripts/README_SECURITY.md",
+    "scripts/proofline-check.sh"
+  ],
+  "deny": [
+    ".env",
+    ".env.*",
+    "*.pem",
+    "*.key",
+    "ngrok.yml",
+    "node_modules/**",
+    ".next/**",
+    ".expo/**",
+    "coverage/**",
+    "test-results/**",
+    "playwright-report/**",
+    ".git/**",
+    ".planning/**",
+    ".proofline/**",
+    ".agent/**",
+    ".agents/**",
+    ".claude/**",
+    ".codex/**",
+    ".harness/**",
+    ".omp/**",
+    ".pi/**",
+    ".supercache/**",
+    "CLAUDE.md",
+    "FLOYD.md",
+    "AGENTS.md"
+  ],
+  "reviewedDenyOverrides": [".env.example"],
+  "gates": [
+    {
+      "name": "security-build-runtime",
+      "command": ["sh", "scripts/proofline-check.sh"],
+      "required": true
+    }
+  ]
+}

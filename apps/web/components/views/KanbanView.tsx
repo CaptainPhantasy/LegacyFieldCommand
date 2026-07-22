@@ -94,7 +94,7 @@ export function KanbanView({ boardId, groups, columns }: KanbanViewProps) {
     if (overItem) {
       // Dropped on another item - reorder within same group
       const sameGroup = activeItem.group_id === overItem.group_id;
-      if (sameGroup) {
+      if (sameGroup && activeItem.group_id) {
         const groupItems = itemsByGroup[activeItem.group_id] || [];
         const oldIndex = groupItems.findIndex(i => i.id === activeItem.id);
         const newIndex = groupItems.findIndex(i => i.id === overItem.id);
@@ -113,7 +113,7 @@ export function KanbanView({ boardId, groups, columns }: KanbanViewProps) {
         }
       } else {
         // Moving to different group - update group_id and position
-        const targetGroupItems = itemsByGroup[overItem.group_id] || [];
+        const targetGroupItems = overItem.group_id ? (itemsByGroup[overItem.group_id] || []) : [];
         const newPosition = targetGroupItems.findIndex(i => i.id === overItem.id);
         
         updateItem.mutate({
@@ -205,4 +205,3 @@ export function KanbanView({ boardId, groups, columns }: KanbanViewProps) {
     </div>
   );
 }
-
